@@ -1,0 +1,116 @@
+// Sorozatnapló · Series detail sheet, two-pane layout and navigation state.
+'use strict';
+
+/* ---------- Detail sheet ---------- */
+let sheetShow = null, sheetSeason = null, sheetEps = [], summaryOpen = false, sheetHu = null;
+function whereSection(s) {
+  const sv = serviceOf(s), my = mine(s), title = sheetHu || s.name, q = encodeURIComponent(title);
+  const link = (href, name, note) => `<a href="${esc(href)}" target="_blank" rel="noopener"><b>${esc(name)}</b><small>${esc(note)}</small>${ICON.ext}</a>`;
+  const rows = [link(`https://www.justwatch.com/hu/search?q=${encodeURIComponent(s.name)}`, 'JustWatch', tr('Minden magyarországi szolgáltató egy helyen, az ingyenes lehetőségekkel együtt'))];
+  if (sv?.id === 'mtva' || !sv || sv.free) rows.push(link(`https://mediaklikk.hu/?s=${q}`, 'Médiaklikk', tr('Ingyenes közmédia (M1, Duna, M2) · keresés erre: {t}', { t: title })));
+  if (sv?.id === 'rtl') rows.push(link(sv.url, 'RTL+', tr('Részben ingyenes · megnyitja a keresőt, írd be: {t}', { t: title })));
+  if (sv?.id === 'tv2') rows.push(link(sv.url, 'TV2 Play', tr('Részben ingyenes · megnyitja a keresőt, írd be: {t}', { t: title })));
+  const head = my ? `<span class="pill ok">✓ ${tr('Valószínűleg benne van')}: ${esc(my.name)}</span>`
+    : sv ? `<span class="pill ${sv.free ? 'ok' : 'neutral'}">${tr('Eredeti csatorna')}: ${esc(sv.name)}${sv.free ? ' · ' + tr('ingyenes is lehet') : ''}</span>` : '';
+  return `<div class="panel" id="where"><h3>${tr('Hol nézhető?')}</h3>${head ? `<div>${head}</div>` : ''}
+    <div class="where">${rows.join('')}</div>
+    <p>${tr('Az előfizetéses egyezést az eredeti csatorna alapján becsüljük. Magyarországon egy sorozat néha máshol fut, ezt a JustWatch pontosan mutatja.')}</p></div>`;
+}
+function renderPlaceholder() {
+  sheetShow = null;
+  $('#sheet').hidden = false;
+  $('#sheet').innerHTML = `<div class="placeholder"><div><b>${tr('Válassz egy sorozatot')}</b>${tr('Koppints bármelyik sorozatra, és itt jelenik meg az adatlapja.')}</div></div>`;
+  document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
+}
+function markActive(id) { document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', wide.matches && +c.dataset.open === id)); }
+const closeBtnHtml = () => `<button class="iconbtn" data-close aria-label="${tr('Bezárás')}"><span class="ico-back">${ICON.back}</span><span class="ico-x">${ICON.x}</span></button>`;
+
+
+async function openShow(id, push = true) {
+  const sh = $('#sheet');
+  if (push) pushSheet({ show: id }, '#sorozat-' + id);
+  sh.hidden = false; sh.scrollTop = 0; if (!wide.matches) document.body.style.overflow = 'hidden';
+  sheetShow = null; sheetSeason = null; summaryOpen = false; sheetHu = null;
+  markActive(id);
+  sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}</div>
+    <div class="sheet-body"><div class="hero"><div class="skel" style="aspect-ratio:2/3"></div><div style="display:flex;flex-direction:column;gap:10px"><div class="skel" style="height:26px;width:80%"></div><div class="skel" style="height:14px;width:50%"></div></div></div>${skelRows(5)}</div>`;
+  try {
+    const [show, eps, hu] = await Promise.all([getShow(id), getEps(id), getHuName(id)]);
+    if (!show) throw new Error('missing');
+    if (sh.hidden || location.hash !== '#sorozat-' + id) return;
+    sheetShow = show; sheetEps = eps || []; sheetHu = hu;
+    if (state.follows[id]) { // keep stored summary fresh (status, poster)
+      Object.assign(state.follows[id], { name: show.name, img: show.img, network: show.network, status: show.status }); save();
+    }
+    const p = progressOf(id, sheetEps);
+    const seasons = [...new Set(regular(sheetEps).map(e => e.s))];
+    sheetSeason = p.next ? p.next.s : seasons[seasons.length - 1] ?? null;
+    sheetTrailerNode = null;
+    renderSheet();
+    fillTrailer(tmdbKey() ? trailerForShow(show) : null, sheetHu || show.name);
+  } catch {
+    sh.querySelector('.sheet-body').innerHTML = errorBox(NET_ERR);
+  }
+}
+function closeShow() {
+  document.body.style.overflow = '';
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  if (wide.matches) renderPlaceholder(); else { $('#sheet').hidden = true; sheetShow = null; }
+  render(); // reflect any changes
+}
+const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie);
+function pushSheet(st, hash) { if (wide.matches && sheetOpen()) history.replaceState(st, '', hash); else history.pushState(st, '', hash); }
+function showSheet() {
+  const sh = $('#sheet'); sh.hidden = false; sh.scrollTop = 0; sheetShow = null;
+  if (!wide.matches) document.body.style.overflow = 'hidden';
+  document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
+}
+let sheetTrailerNode = null;
+function renderSheet() {
+  // keep the trailer element (and a playing video) across re-renders of the sheet
+  const oldTrailer = document.querySelector('#sheet #trailerPanel');
+  if (oldTrailer) sheetTrailerNode = oldTrailer;
+  renderSheetInner();
+  const slot = document.querySelector('#sheet #trailerPanel');
+  if (slot && sheetTrailerNode && sheetTrailerNode !== slot) slot.replaceWith(sheetTrailerNode);
+}
+function renderSheetInner() {
+  const s = sheetShow, eps = regular(sheetEps), p = progressOf(s.id, sheetEps), followed = !!state.follows[s.id];
+  const seasons = [...new Set(eps.map(e => e.s))];
+  const inSeason = eps.filter(e => e.s === sheetSeason);
+  const seasonAired = inSeason.filter(aired);
+  const seasonAllWatched = seasonAired.length && seasonAired.every(e => isWatched(s.id, e.id));
+  const facts = [statusPill(s.status), s.rating ? `<span class="pill neutral">★ ${s.rating.toFixed(1)}</span>` : '', s.runtime ? `<span class="pill neutral">${s.runtime} perc</span>` : '', ...s.genres.slice(0, 3).map(g => `<span class="pill neutral">${esc(g)}</span>`)].join('');
+  const years = s.premiered ? (s.ended ? `${s.premiered.slice(0, 4)}–${s.ended.slice(0, 4)}` : `${s.premiered.slice(0, 4)}–`) : '';
+  const nextLine = p.next ? `${tr('Következő')}: <span class="code">${code(p.next)}</span> · ${esc(p.next.name)}` : p.upcoming ? `${tr('Új rész')}: <span class="code">${code(p.upcoming)}</span> · ${fmtDate(p.upcoming.date)}` : '';
+  $('#sheet').innerHTML = `<div class="sheet-bar">${closeBtnHtml()}
+      ${s.url ? `<a class="iconbtn" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a TVmaze-en')}">${ICON.ext}</a>` : ''}</div>
+    <div class="sheet-body">
+      <div class="hero">${posterImg(s)}<div style="min-width:0">
+        <h2>${esc(s.name)}</h2>${sheetHu && sheetHu !== s.name ? `<div class="note" style="color:var(--fg)">${tr('Helyi cím')}: ${esc(sheetHu)}</div>` : ''}<div class="note">${esc([years, s.network].filter(Boolean).join(' · '))}</div>
+        <div class="facts">${facts}</div>
+        <div class="actions"><button class="btn ${followed ? 'soft' : 'primary'}" data-follow>${followed ? ICON.check + tr('A listádon') : ICON.plus + tr('Listára teszem')}</button>
+          <button class="btn ghost" data-where>${tr('Hol nézhető?')}</button></div>
+      </div></div>
+      ${rateWidget('tv:' + s.id, { kind: 'tv', ref: s.id, title: sheetHu || s.name, img: s.img })}
+      ${trailerPanel()}
+      ${s.summary ? `<div><p class="summary ${summaryOpen ? '' : 'clamp'}" lang="${s.lang === 'Hungarian' ? 'hu' : 'en'}">${esc(s.summary)}</p>${s.summary.length > 220 ? `<button class="linkbtn" data-more>${tr(summaryOpen ? 'Kevesebb' : 'Tovább olvasom')}</button>` : ''}</div>` : ''}
+      <div class="stat"><div><b>${p.watched}</b><span>${tr('megnézett rész')}</span></div><div><b>${Math.max(p.aired - p.watched, 0)}</b><span>${tr('hátralévő rész')}</span></div><div><b>${seasons.length}</b><span>${tr('évad')}</span></div></div>
+      ${nextLine ? `<div class="note" style="color:var(--fg)">${nextLine}</div>` : ''}
+      ${whereSection(s)}
+      ${seasons.length ? `<section>
+        <div class="seg" role="group" aria-label="${tr('Évad választása')}">${seasons.map(n => {
+          const se = eps.filter(e => e.s === n && aired(e)); const done = se.length && se.every(e => isWatched(s.id, e.id));
+          return `<button data-pick="${n}" aria-pressed="${n === sheetSeason}">${tr('{n}. évad', { n })}${done ? ' ✓' : ''}</button>`; }).join('')}</div>
+        <div class="sec-head"><span class="label">${tr('{n}. évad', { n: sheetSeason })} · ${tr('{n} rész', { n: inSeason.length })}</span>
+          ${seasonAired.length ? `<button class="btn small ${seasonAllWatched ? 'ghost' : 'soft'}" data-season="${seasonAllWatched ? 'off' : 'on'}">${tr(seasonAllWatched ? 'Jelölés visszavonása' : 'Egész évad megnézve')}</button>` : ''}</div>
+        <div class="list">${inSeason.map(e => {
+          const a = aired(e), w = isWatched(s.id, e.id);
+          return `<div class="ep ${a ? '' : 'future'}"><span class="no">${e.n}.</span>
+            <div style="min-width:0"><div class="t">${esc(e.name)}</div><div class="d">${a ? fmtDate(e.date) : 'Megjelenik: ' + fmtDate(e.date)}${e.rt ? ` · ${e.rt} perc` : ''}</div></div>
+            <button class="check" data-ep="${s.id}:${e.id}" aria-pressed="${w}" ${a ? '' : 'disabled'} aria-label="${esc(code(e))} ${tr(w ? 'megnézve' : 'megjelölése megnézettként')}">${ICON.check}</button></div>`;
+        }).join('')}</div></section>` : `<p class="note">${tr('Ehhez a sorozathoz még nincsenek epizódadatok.')}</p>`}
+      <p class="note">${tr('Adatok: TVmaze. A leírások az adatbázisból származnak, többnyire angol nyelvűek.')}</p>
+    </div>`;
+}
+
