@@ -76,7 +76,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
-.tabbar-inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tabbar)}
+.tabbar-inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tabbar)}
 .tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   color:var(--muted);font-size:11.5px;font-weight:500;cursor:pointer;position:relative}
 .tab svg{width:24px;height:24px}
@@ -231,6 +231,17 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 }
 .iconbtn .ico-back{display:grid}
 .iconbtn .ico-x{display:none}
+.player{width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--r);overflow:hidden;display:block}
+.player video,.player iframe{width:100%;height:100%;border:0;display:block}
+.yt{position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:var(--r);background:#000 center/cover no-repeat;cursor:pointer;padding:0;display:block}
+.yt .play{position:absolute;inset:0;margin:auto;width:68px;height:68px;border-radius:34px;background:rgba(0,0,0,.6);display:grid;place-items:center;color:#fff}
+.yt .play svg{width:30px;height:30px;margin-left:4px}
+.yt:hover .play{background:var(--accent)}
+.field{display:flex;gap:8px;flex-wrap:wrap}
+.field input{flex:1 1 220px;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:15px var(--font-body);padding:0 12px}
+.steps{margin:0;padding-left:20px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.steps a{color:var(--accent)}
+.more{align-self:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -241,11 +252,13 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 
 <nav class="tabbar" aria-label="Fő menü"><div class="tabbar-inner">
   <button class="tab" data-tab="home" aria-current="page">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="13" rx="2.5"/><path d="M8 21h8M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>Kezdőlap</button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19z"/></svg>Kezdőlap</button>
+  <button class="tab" data-tab="watch">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="13" rx="2.5"/><path d="M8 21h8M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>Nézd most</button>
+  <button class="tab" data-tab="upcoming">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Érkezik</button>
   <button class="tab" data-tab="search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>Keresés</button>
-  <button class="tab" data-tab="calendar">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Naptár</button>
   <button class="tab" data-tab="library">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>Listám<span class="badge" id="libBadge" hidden></span></button>
 </div></nav>
@@ -266,6 +279,7 @@ const ICON = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>',
   x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>'
 };
 
@@ -319,8 +333,9 @@ async function api(path, ttl, map = x => x) {
   if (inflight.has(path)) return inflight.get(path);
   const p = (async () => {
     try {
-      let r = await fetch(API + path);
-      if (r.status === 429) { await new Promise(res => setTimeout(res, 1500)); r = await fetch(API + path); }
+      const url = path.startsWith('http') ? path : API + path;
+      let r = await fetch(url);
+      if (r.status === 429) { await new Promise(res => setTimeout(res, 1500)); r = await fetch(url); }
       if (r.status === 404) return null;
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = map(await r.json());
@@ -339,7 +354,7 @@ const slimShow = s => s && ({
   id: s.id, name: s.name, img: s.image?.medium || null,
   network: s.network?.name || s.webChannel?.name || '', status: s.status,
   premiered: s.premiered, ended: s.ended, genres: s.genres || [], rating: s.rating?.average ?? null,
-  summary: strip(s.summary), runtime: s.runtime || s.averageRuntime || null, url: s.url, lang: s.language, weight: s.weight || 0
+  summary: strip(s.summary), runtime: s.runtime || s.averageRuntime || null, url: s.url, lang: s.language, weight: s.weight || 0, imdb: s.externals?.imdb || null
 });
 const slimEp = e => ({ id: e.id, s: e.season, n: e.number, name: e.name, date: e.airdate, stamp: e.airstamp, rt: e.runtime });
 const getShow = id => api(`/shows/${id}`, DAY, slimShow);
@@ -423,8 +438,8 @@ async function setWatched(sid, eids, on) {
 }
 
 /* ---------- render shell ---------- */
-let tab = 'home', calSeg = 'mine', renderId = 0, searchQ = '';
-const TITLES = { home: 'Kezdőlap', search: 'Keresés', calendar: 'Műsornaptár', library: 'Listám' };
+let tab = 'home', calSeg = Object.keys(state.follows).length ? 'mine' : 'series', renderId = 0, searchQ = '';
+const TITLES = { home: 'Kezdőlap', watch: 'Nézd most', upcoming: 'Érkezik', search: 'Keresés', library: 'Listám' };
 function setTab(t) {
   tab = t;
   document.querySelectorAll('.tab').forEach(b => b.dataset.tab === t ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
@@ -437,7 +452,7 @@ function render() {
   $('#title').textContent = TITLES[tab];
   $('#sub').textContent = tab === 'home' ? new Date().toLocaleDateString('hu-HU', { month: 'long', day: 'numeric', weekday: 'long' }) : '';
   const v = $('#view');
-  ({ home: renderHome, search: renderSearch, calendar: renderCalendar, library: renderLibrary })[tab](v, () => id === renderId);
+  ({ home: renderHome, watch: renderWatch, upcoming: renderUpcoming, search: renderSearch, library: renderLibrary })[tab](v, () => id === renderId);
 }
 const skelRows = n => `<div class="list">${Array.from({ length: n }, () => `<div class="row"><div class="skel" style="width:52px;aspect-ratio:2/3"></div><div style="display:flex;flex-direction:column;gap:6px"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:12px;width:80%"></div></div><span></span></div>`).join('')}</div>`;
 const skelGrid = n => `<div class="grid">${Array.from({ length: n }, () => `<div><div class="skel" style="aspect-ratio:2/3"></div></div>`).join('')}</div>`;
@@ -525,7 +540,7 @@ async function loadPopular(alive) {
     $('#pop').innerHTML = list.length ? `<div class="rail">${list.map(s => showCard(s)).join('')}</div>` : errorBox(NET_ERR);
   } catch { if (alive()) $('#pop').innerHTML = errorBox(NET_ERR); }
 }
-function groupByDay(items, withTime = true) {
+function groupByDay(items, withTime = true, premiere = false) {
   const days = new Map();
   items.forEach(it => { const d = it.ep.date; if (!days.has(d)) days.set(d, []); days.get(d).push(it); });
   return [...days].map(([d, arr]) => `<div class="day"><h3><b>${dayLabel(d)}</b> · ${fmtDate(d)}</h3><div class="list">
@@ -534,7 +549,7 @@ function groupByDay(items, withTime = true) {
       return `<div class="row">
         <img class="thumb" src="${esc(show.img || '')}" alt="" data-open="${show.id}" loading="lazy">
         <div class="body" data-open="${show.id}"><div class="t1">${esc(show.name)}</div>
-        <div class="t2"><span class="code">${code(ep)}</span> · ${esc(ep.name)}</div>
+        <div class="t2">${premiere ? `<span class="pill ${ep.s === 1 ? 'accent' : 'neutral'}">${ep.s === 1 ? 'Új sorozat' : ep.s > 1900 ? ep.s + '-es kiadás' : ep.s + '. évad'}</span> ${esc((show.genres || []).slice(0, 2).join(', '))}` : `<span class="code">${code(ep)}</span> · ${esc(ep.name)}`}</div>
         <div class="t3">${[time && time + ' (magyar idő)', show.network].filter(Boolean).map(esc).join(' · ')}</div></div>
         ${state.follows[show.id] ? '<span class="pill accent">Követed</span>' : ''}</div>`;
     }).join('')}</div></div>`).join('');
@@ -573,11 +588,20 @@ async function runSearch(alive) {
 }
 
 /* ---------- Calendar ---------- */
-async function renderCalendar(v, alive) {
-  const segs = [['mine', 'Követett sorozataim'], ['web', 'Ma: streaming'], ['hu', 'Ma: magyar TV']];
-  v.innerHTML = `<div class="seg" role="group" aria-label="Naptár nézet">${segs.map(([k, l]) => `<button data-seg="${k}" aria-pressed="${calSeg === k}">${l}</button>`).join('')}</div><div id="cal">${skelRows(4)}</div>`;
+async function renderUpcoming(v, alive) {
+  const segs = [['mine', 'Követett sorozataim'], ['series', 'Új sorozatok és évadok'], ['movies', 'Mozifilmek'], ['web', 'Ma: streaming'], ['hu', 'Ma: magyar TV']];
+  v.innerHTML = `<div class="seg" role="group" aria-label="Érkezik nézet">${segs.map(([k, l]) => `<button data-seg="${k}" aria-pressed="${calSeg === k}">${l}</button>`).join('')}</div><div id="cal">${skelRows(4)}</div>`;
   const box = $('#cal');
   try {
+    if (calSeg === 'series') {
+      const items = await premieres();
+      if (!alive()) return;
+      box.innerHTML = items.length
+        ? `<p class="note">Új sorozatok és új évadok első részei a következő 7 napban: streaming, amerikai és magyar csatornák. ${items.length} cím.</p>` + groupByDay(items, false, true)
+        : `<div class="empty"><h3>Nincs bejelentett premier</h3><p>A következő 7 napra most nincs adat.</p></div>`;
+      return;
+    }
+    if (calSeg === 'movies') { await renderMovies(box, alive); return; }
     if (calSeg === 'mine') {
       const ids = Object.keys(state.follows);
       if (!ids.length) { box.innerHTML = `<div class="empty"><h3>Még nem követsz sorozatot</h3><p>A követett sorozataid következő részei itt jelennek meg napokra bontva.</p><button class="btn primary" data-tab="search">${ICON.search}Sorozat keresése</button></div>`; return; }
@@ -601,6 +625,208 @@ async function renderCalendar(v, alive) {
         : `<div class="empty"><h3>Mára nincs adat</h3><p>Erre a napra az adatbázisban nincs műsor ebben a nézetben.</p></div>`;
     }
   } catch { if (alive()) box.innerHTML = errorBox(NET_ERR); }
+}
+
+/* ---------- Upcoming: series premieres (TVmaze) and cinema releases (TMDB) ---------- */
+async function premieres() {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today(), i));
+  const paths = days.flatMap(d => [`/schedule/web?date=${d}`, `/schedule?country=US&date=${d}`, `/schedule?country=HU&date=${d}`]);
+  const lists = await pool(paths, 4, p => api(p, 6 * H, a => a.filter(x => x.number === 1)
+    .map(x => ({ show: slimShow(x._embedded?.show || x.show), ep: slimEp(x) }))).catch(() => []));
+  const best = new Map();
+  lists.flat().forEach(it => {
+    if (!it.show || !it.ep.date) return;
+    const hu = /^(rtl|tv2|m1|duna|super tv2)/i.test(it.show.network || '');
+    if (!hu && (it.show.weight || 0) < 85) return;
+    const cur = best.get(it.show.id);
+    if (!cur || it.ep.date < cur.ep.date) best.set(it.show.id, it);
+  });
+  return [...best.values()].sort((a, b) => a.ep.date.localeCompare(b.ep.date) || (b.show.weight || 0) - (a.show.weight || 0));
+}
+
+const TMDB = 'https://api.themoviedb.org/3', TIMG = 'https://image.tmdb.org/t/p/';
+const tmdbKey = () => (state.tmdb || '').trim();
+async function tmdb(path, ttl = DAY) {
+  const k = tmdbKey();
+  if (!k) throw new Error('nokey');
+  const bearer = k.length > 40;
+  const cacheKey = 'sn.c.tmdb' + path, c = ls.get(cacheKey, null);
+  if (c && Date.now() - c.t < ttl) return c.d;
+  const url = TMDB + path + (bearer ? '' : (path.includes('?') ? '&' : '?') + 'api_key=' + encodeURIComponent(k));
+  const r = await fetch(url, { headers: bearer ? { Authorization: 'Bearer ' + k } : {} });
+  if (r.status === 401) throw new Error('badkey');
+  if (!r.ok) { if (c) return c.d; throw new Error('HTTP ' + r.status); }
+  const d = await r.json();
+  ls.set(cacheKey, { t: Date.now(), d });
+  return d;
+}
+const tmdbHelp = `<ol class="steps">
+  <li>Regisztrálj ingyen a <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a> oldalon.</li>
+  <li>A profilodban nyisd meg: Beállítások → API, és kérj egy ingyenes kulcsot (Developer / személyes használat).</li>
+  <li>Másold ki az „API Read Access Token” vagy az „API Key” értéket, és illeszd be ide az app Beállításaiba.</li></ol>`;
+const noKeyPanel = what => `<div class="panel"><h3>${what} egy ingyenes kulccsal</h3>
+  <p>Ehhez a TMDB filmadatbázist használjuk, amihez egy saját, ingyenes kulcs kell. Egyszer kell beállítani, pár perc.</p>${tmdbHelp}
+  <div><button class="btn primary" data-settings>Kulcs megadása</button></div></div>`;
+const keyError = e => e.message === 'badkey' ? errorBox('A megadott TMDB-kulcs nem érvényes. Ellenőrizd a Beállításokban.') : errorBox(NET_ERR);
+
+async function renderMovies(box, alive) {
+  if (!tmdbKey()) { box.innerHTML = noKeyPanel('Mozifilmek és előzetesek'); return; }
+  try {
+    const pages = await Promise.all([1, 2, 3].map(p => tmdb(`/movie/upcoming?language=hu-HU&region=HU&page=${p}`, 12 * H).catch(() => ({ results: [] }))));
+    if (!alive()) return;
+    const t = today(), seen = new Set();
+    const movies = pages.flatMap(p => p.results || []).filter(m => m.release_date >= t && !seen.has(m.id) && seen.add(m.id))
+      .sort((a, b) => a.release_date.localeCompare(b.release_date) || b.popularity - a.popularity);
+    if (!movies.length) { box.innerHTML = `<div class="empty"><h3>Nincs bejelentett bemutató</h3><p>A következő hetekre most nincs adat a magyar mozibemutatókról.</p></div>`; return; }
+    const days = new Map();
+    movies.forEach(m => { if (!days.has(m.release_date)) days.set(m.release_date, []); days.get(m.release_date).push(m); });
+    box.innerHTML = `<p class="note">Magyarországi mozibemutatók. Koppints egy filmre az előzetesért.</p>` + [...days].map(([d, arr]) => `<div class="day"><h3><b>${dayLabel(d)}</b> · ${fmtDate(d)}</h3><div class="list">
+      ${arr.map(m => `<div class="row" data-movie="${m.id}">
+        ${m.poster_path ? `<img class="thumb" src="${TIMG}w154${esc(m.poster_path)}" alt="" loading="lazy">` : '<div class="thumb"></div>'}
+        <div class="body"><div class="t1">${esc(m.title)}</div>
+        <div class="t2">${m.original_title !== m.title ? esc(m.original_title) : '&nbsp;'}</div>
+        <div class="t3">Mozibemutató · ${relDays(d)}${m.vote_count > 20 ? ` · ★ ${m.vote_average.toFixed(1)}` : ''}</div></div><span class="pill accent">Mozi</span></div>`).join('')}
+      </div></div>`).join('');
+  } catch (e) { if (alive()) box.innerHTML = keyError(e); }
+}
+
+/* ---------- Trailers (TMDB → YouTube, played inside the app) ---------- */
+function pickTrailer(results) {
+  const score = v => (v.type === 'Trailer' ? 4 : v.type === 'Teaser' ? 2 : 0) + (v.iso_639_1 === 'hu' ? 3 : 0) + (v.official ? 1 : 0);
+  return (results || []).filter(v => v.site === 'YouTube').sort((a, b) => score(b) - score(a))[0] || null;
+}
+async function trailerForShow(s) {
+  let id = null;
+  if (s.imdb) id = (await tmdb(`/find/${s.imdb}?external_source=imdb_id`, 7 * DAY)).tv_results?.[0]?.id;
+  if (!id) id = (await tmdb(`/search/tv?query=${encodeURIComponent(s.name)}${s.premiered ? '&first_air_date_year=' + s.premiered.slice(0, 4) : ''}`, 7 * DAY)).results?.[0]?.id;
+  if (!id) return null;
+  return pickTrailer((await tmdb(`/tv/${id}/videos?language=hu-HU&include_video_language=hu,en,null`)).results);
+}
+const ytSearch = title => `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' előzetes trailer')}`;
+function trailerPanel() { return `<div class="panel" id="trailerPanel"><h3>Előzetes</h3><div data-tslot><div class="skel" style="aspect-ratio:16/9"></div></div></div>`; }
+async function fillTrailer(promise, title) {
+  const slot = document.querySelector('#trailerPanel [data-tslot]');
+  if (!slot) return;
+  if (!tmdbKey()) {
+    slot.innerHTML = `<p>Add meg az ingyenes TMDB-kulcsot a Beállításokban, és az előzetes itt, az appban indul.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn soft" data-settings>Kulcs megadása</button>
+      <a class="btn ghost" style="text-decoration:none" href="${ytSearch(title)}" target="_blank" rel="noopener">${ICON.ext}Keresés a YouTube-on</a></div>`;
+    return;
+  }
+  try {
+    const t = await promise;
+    if (!document.contains(slot)) return;
+    slot.innerHTML = t
+      ? `<button class="yt" data-yt="${esc(t.key)}" aria-label="Előzetes lejátszása" style="background-image:url('https://i.ytimg.com/vi/${esc(t.key)}/hqdefault.jpg')"><span class="play">${ICON.play}</span></button>
+         <p class="note" style="margin-top:8px">${esc(t.name)}${t.iso_639_1 === 'hu' ? ' · magyar' : ''}</p>`
+      : `<p>Ehhez a címhez nem találtunk előzetest.</p><a class="btn ghost" style="text-decoration:none;margin-top:10px" href="${ytSearch(title)}" target="_blank" rel="noopener">${ICON.ext}Keresés a YouTube-on</a>`;
+  } catch (e) { if (document.contains(slot)) slot.innerHTML = keyError(e); }
+}
+function playYouTube(btn) {
+  const key = btn.dataset.yt;
+  const box = document.createElement('div'); box.className = 'player';
+  box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&rel=0&playsinline=1&modestbranding=1" title="Előzetes" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  btn.replaceWith(box);
+}
+
+/* ---------- Movie detail (TMDB) ---------- */
+async function openMovie(id, push = true) {
+  if (push) pushSheet({ movie: id }, '#mozi-' + id);
+  showSheet();
+  const sh = $('#sheet');
+  sh.innerHTML = `<div class="sheet-bar">${closeBtn}</div><div class="sheet-body">${skelRows(3)}</div>`;
+  try {
+    const m = await tmdb(`/movie/${id}?language=hu-HU&append_to_response=videos&include_video_language=hu,en,null`);
+    if (location.hash !== '#mozi-' + id) return;
+    const t = pickTrailer(m.videos?.results);
+    const facts = [m.release_date ? `<span class="pill accent">Bemutató: ${fmtDate(m.release_date)}</span>` : '', m.runtime ? `<span class="pill neutral">${m.runtime} perc</span>` : '',
+      m.vote_count > 20 ? `<span class="pill neutral">★ ${m.vote_average.toFixed(1)}</span>` : '', ...(m.genres || []).slice(0, 3).map(g => `<span class="pill neutral">${esc(g.name)}</span>`)].join('');
+    sh.innerHTML = `<div class="sheet-bar">${closeBtn}</div><div class="sheet-body">
+      <div class="hero">${m.poster_path ? `<img class="poster" src="${TIMG}w342${esc(m.poster_path)}" alt="">` : `<div class="poster-ph">${esc(m.title)}</div>`}
+        <div style="min-width:0"><h2>${esc(m.title)}</h2>${m.original_title !== m.title ? `<div class="note">${esc(m.original_title)}</div>` : ''}<div class="facts">${facts}</div></div></div>
+      <div class="panel"><h3>Előzetes</h3>${t ? `<button class="yt" data-yt="${esc(t.key)}" aria-label="Előzetes lejátszása" style="background-image:url('https://i.ytimg.com/vi/${esc(t.key)}/hqdefault.jpg')"><span class="play">${ICON.play}</span></button><p class="note">${esc(t.name)}${t.iso_639_1 === 'hu' ? ' · magyar' : ''}</p>`
+        : `<p>Ehhez a filmhez még nincs előzetes.</p><a class="btn ghost" style="text-decoration:none" href="${ytSearch(m.title)}" target="_blank" rel="noopener">${ICON.ext}Keresés a YouTube-on</a>`}</div>
+      ${m.overview ? `<p class="summary">${esc(m.overview)}</p>` : '<p class="note">Magyar leírás még nincs.</p>'}
+      <div class="panel"><h3>Hol nézhető?</h3><div class="where"><a href="https://www.justwatch.com/hu/search?q=${encodeURIComponent(m.title)}" target="_blank" rel="noopener"><b>JustWatch</b><small>Mozik és később a streaming-szolgáltatók</small>${ICON.ext}</a></div></div>
+      <p class="note">Adatok és előzetes: TMDB, YouTube.</p></div>`;
+  } catch (e) { sh.querySelector('.sheet-body').innerHTML = keyError(e); }
+}
+
+/* ---------- Watch now: public-domain films from the Internet Archive ---------- */
+const IA = 'https://archive.org';
+const IA_BASE = 'mediatype:movies AND licenseurl:*publicdomain* AND format:("h.264" OR "512Kb MPEG4")';
+const IA_GENRES = [['pop', 'Népszerű', 'collection:feature_films'], ['comedy', 'Vígjáték', 'collection:Comedy_Films'], ['noir', 'Film noir', 'collection:Film_Noir'],
+  ['scifi', 'Sci-fi és horror', 'collection:SciFi_Horror'], ['western', 'Western', 'collection:feature_films AND subject:western'], ['silent', 'Némafilm', 'collection:silent_films'], ['tv', 'Régi tévésorozatok', 'collection:classic_tv']];
+let iaGenre = 'pop', iaQ = '', iaPage = 1;
+const iaThumb = id => `${IA}/services/img/${encodeURIComponent(id)}`;
+function iaSearch(genre, text, page) {
+  let q = `${IA_BASE} AND (${IA_GENRES.find(g => g[0] === genre)[2]})`;
+  const clean = text.replace(/[^\p{L}\p{N} ]/gu, ' ').trim();
+  if (clean) q += ` AND title:(${clean})`;
+  return api(`${IA}/advancedsearch.php?q=${encodeURIComponent(q)}&fl[]=identifier&fl[]=title&fl[]=year&rows=24&page=${page}&sort[]=downloads+desc&output=json`, 12 * H,
+    d => ({ total: d.response?.numFound || 0, docs: (d.response?.docs || []).map(x => ({ id: x.identifier, title: Array.isArray(x.title) ? x.title[0] : x.title, year: x.year })) }));
+}
+const filmCard = f => `<button class="card" data-film="${esc(f.id)}" aria-label="${esc(f.title)}">
+  <img class="poster" src="${iaThumb(f.id)}" alt="${esc(f.title)}" loading="lazy" onerror="this.outerHTML='<div class=&quot;poster-ph&quot;>'+this.alt.replace(/[<&]/g,'')+'</div>'">
+  <span class="name">${esc(f.title)}</span><span class="meta">${esc(f.year || 'Klasszikus')}</span></button>`;
+const FREE_HU = [
+  ['https://mediaklikk.hu/', 'Médiaklikk', 'Az M1, a Duna és az M2 műsorai, filmek, sorozatok és mesék, ingyen'],
+  ['https://www.rtlplusz.hu/', 'RTL+', 'Az ingyenes része regisztrációval nézhető (sorozatok, műsorok)'],
+  ['https://tv2play.hu/', 'TV2 Play', 'Az ingyenes része reklámokkal nézhető'],
+  ['https://filmio.hu/', 'Filmio', 'A Nemzeti Filmintézet magyar filmtára, időszakonként ingyenes akciókkal']];
+function renderWatch(v, alive) {
+  v.innerHTML = `<section><div class="sec-head"><h2>Klasszikus filmek, ingyen</h2></div>
+      <p class="note">Közkincs (public domain) filmek és régi sorozatok az Internet Archive-ból. Az appban indulnak, reklám nélkül. Többnyire angol nyelvűek, felirat nélkül; a némafilmekhez nem kell nyelvtudás.</p>
+      <div class="search">${ICON.search}<input id="iaq" type="search" enterkeyhint="search" autocomplete="off" placeholder="Film címe, pl. Chaplin" value="${esc(iaQ)}" aria-label="Klasszikus film keresése"></div>
+      <div class="seg" role="group" aria-label="Műfaj">${IA_GENRES.map(([k, l]) => `<button data-genre="${k}" aria-pressed="${iaGenre === k}">${l}</button>`).join('')}</div>
+      <div id="ia">${skelGrid(6)}</div></section>
+    <div class="panel"><h3>Ingyenes magyar források</h3><p>Ezek a saját oldalukon nyílnak meg.</p>
+      <div class="where">${FREE_HU.map(([u, n, d]) => `<a href="${u}" target="_blank" rel="noopener"><b>${n}</b><small>${d}</small>${ICON.ext}</a>`).join('')}</div></div>`;
+  const q = $('#iaq');
+  q.addEventListener('input', () => { clearTimeout(renderWatch.t); renderWatch.t = setTimeout(() => { iaQ = q.value; iaPage = 1; loadIA(alive, false); }, 400); });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(renderWatch.t); iaQ = q.value; iaPage = 1; loadIA(alive, false); q.blur(); } });
+  iaPage = 1; loadIA(alive, false);
+}
+async function loadIA(alive, append) {
+  const box = $('#ia'); if (!box) return;
+  const want = `${iaGenre}|${iaQ}|${iaPage}`;
+  if (!append) box.innerHTML = skelGrid(6);
+  try {
+    const res = await iaSearch(iaGenre, iaQ, iaPage);
+    if (!alive() || `${iaGenre}|${iaQ}|${iaPage}` !== want || !$('#ia')) return;
+    const grid = box.querySelector('.grid');
+    const cards = res.docs.map(filmCard).join('');
+    if (append && grid) grid.insertAdjacentHTML('beforeend', cards);
+    else box.innerHTML = res.docs.length ? `<div class="grid">${cards}</div>` : `<div class="empty"><h3>Nincs találat</h3><p>Próbáld angol címmel, vagy válassz másik műfajt.</p></div>`;
+    box.querySelector('.more')?.remove();
+    if (res.total > iaPage * 24) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-iamore style="margin-top:14px">Továbbiak (${res.total - iaPage * 24})</button>`);
+  } catch { if (alive()) box.innerHTML = errorBox('Nem sikerült elérni az Internet Archive-ot. Próbáld újra kicsit később.'); }
+}
+async function openFilm(id, push = true) {
+  const hash = '#film-' + encodeURIComponent(id);
+  if (push) pushSheet({ film: id }, hash);
+  showSheet();
+  const sh = $('#sheet');
+  sh.innerHTML = `<div class="sheet-bar">${closeBtn}</div><div class="sheet-body"><div class="skel" style="aspect-ratio:16/9"></div>${skelRows(2)}</div>`;
+  try {
+    const m = await api(`${IA}/metadata/${encodeURIComponent(id)}`, 7 * DAY, d => ({
+      title: [].concat(d.metadata?.title || id)[0], year: d.metadata?.year || (d.metadata?.date || '').slice(0, 4), runtime: d.metadata?.runtime,
+      desc: strip([].concat(d.metadata?.description || '').join(' ')).slice(0, 1500), server: d.d1,
+      files: (d.files || []).filter(f => /\.(mp4|ogv|srt|vtt)$/i.test(f.name)).map(f => ({ name: f.name, format: f.format }))
+    }));
+    if (location.hash !== hash) return;
+    const pick = fmt => m.files.find(f => f.format === fmt);
+    const video = pick('512Kb MPEG4') || pick('h.264') || m.files.find(f => /\.mp4$/i.test(f.name)) || pick('Ogg Video');
+    const src = f => `${IA}/download/${encodeURIComponent(id)}/${f.name.split('/').map(encodeURIComponent).join('/')}`;
+    sh.innerHTML = `<div class="sheet-bar">${closeBtn}<a class="iconbtn" href="${IA}/details/${encodeURIComponent(id)}" target="_blank" rel="noopener" aria-label="Megnyitás az Internet Archive-on">${ICON.ext}</a></div>
+      <div class="sheet-body">
+        ${video ? `<div class="player"><video id="film" controls playsinline preload="metadata" poster="${iaThumb(id)}"><source src="${src(video)}" type="${/\.ogv$/i.test(video.name) ? 'video/ogg' : 'video/mp4'}"></video></div>`
+          : errorBox('Ennek a filmnek már nincs lejátszható változata. Válassz egy másikat.')}
+        <div><h2 style="font:800 24px/1.15 var(--font-display);margin:0 0 6px">${esc(m.title)}</h2>
+          <div class="facts">${m.year ? `<span class="pill neutral">${esc(m.year)}</span>` : ''}${m.runtime ? `<span class="pill neutral">${esc(m.runtime)}</span>` : ''}<span class="pill ok">Közkincs</span></div></div>
+        ${m.desc ? `<p class="summary" lang="en">${esc(m.desc)}</p>` : ''}
+        <p class="note">Forrás: Internet Archive. Szerzői jog alól felszabadult (public domain) mű.</p></div>`;
+  } catch { sh.querySelector('.sheet-body').innerHTML = errorBox('Nem sikerült betölteni a filmet. Ellenőrizd az internetkapcsolatot.'); }
 }
 
 /* ---------- Library ---------- */
@@ -679,8 +905,28 @@ async function renderSettings() {
         state.notify && perm === 'granted'
           ? `<button class="btn ghost" data-notify="off">Értesítések kikapcsolása</button><button class="btn soft" data-notify="test">Próbaértesítés</button>`
           : `<button class="btn primary" data-notify="on">Értesítések bekapcsolása</button>`}</div></div>
+    <div class="panel"><h3>Előzetesek és mozifilmek (TMDB-kulcs)</h3>
+      <p>${tmdbKey() ? 'A kulcs be van állítva: az előzetesek az appban indulnak, és látod a mozibemutatókat.' : 'Egy ingyenes kulccsal az előzetesek az appban indulnak, és megjelennek a magyar mozibemutatók is.'}</p>
+      ${tmdbKey() ? '' : tmdbHelp}
+      <div class="field"><input id="tmdbKey" type="password" autocomplete="off" spellcheck="false" placeholder="API Key vagy API Read Access Token" value="${esc(state.tmdb || '')}" aria-label="TMDB-kulcs">
+        <button class="btn primary" data-tmdb="save">Mentés</button>${tmdbKey() ? '<button class="btn ghost" data-tmdb="clear">Törlés</button>' : ''}</div>
+      <p id="tmdbMsg" aria-live="polite"></p></div>
     <div class="panel"><h3>Adatok</h3><p>A listád és a megnézett részek csak ezen az eszközön vannak tárolva. A sorozatadatok forrása a TVmaze nyilvános adatbázisa.</p></div>
     </div>`;
+}
+async function saveTmdb(clear) {
+  const msg = $('#tmdbMsg');
+  if (clear) { state.tmdb = ''; save(); toast('TMDB-kulcs törölve'); return renderSettings(); }
+  const k = ($('#tmdbKey')?.value || '').trim();
+  if (!k) { msg.textContent = 'Illeszd be a kulcsot a mezőbe.'; return; }
+  msg.textContent = 'Kulcs ellenőrzése…';
+  const bearer = k.length > 40;
+  try {
+    const r = await fetch(`${TMDB}/configuration${bearer ? '' : '?api_key=' + encodeURIComponent(k)}`, { headers: bearer ? { Authorization: 'Bearer ' + k } : {} });
+    if (r.status === 401) { msg.textContent = 'Ez a kulcs nem érvényes. Ellenőrizd, hogy a teljes kulcsot másoltad-e be.'; return; }
+    if (!r.ok) throw new Error();
+  } catch { msg.textContent = 'Nem sikerült ellenőrizni a kulcsot. Ellenőrizd az internetkapcsolatot.'; return; }
+  state.tmdb = k; save(); toast('TMDB-kulcs elmentve'); renderSettings();
 }
 async function setNotify(on) {
   if (!on) { state.notify = false; save(); toast('Értesítések kikapcsolva'); return renderSettings(); }
@@ -703,10 +949,7 @@ async function testNotify() {
 }
 async function openShow(id, push = true) {
   const sh = $('#sheet');
-  if (push) {
-    if (wide.matches && (history.state?.show || history.state?.settings)) history.replaceState({ show: id }, '', '#sorozat-' + id);
-    else history.pushState({ show: id }, '', '#sorozat-' + id);
-  }
+  if (push) pushSheet({ show: id }, '#sorozat-' + id);
   sh.hidden = false; sh.scrollTop = 0; if (!wide.matches) document.body.style.overflow = 'hidden';
   sheetShow = null; sheetSeason = null; summaryOpen = false; sheetHu = null;
   markActive(id);
@@ -723,7 +966,9 @@ async function openShow(id, push = true) {
     const p = progressOf(id, sheetEps);
     const seasons = [...new Set(regular(sheetEps).map(e => e.s))];
     sheetSeason = p.next ? p.next.s : seasons[seasons.length - 1] ?? null;
+    sheetTrailerNode = null;
     renderSheet();
+    fillTrailer(tmdbKey() ? trailerForShow(show) : null, sheetHu || show.name);
   } catch {
     sh.querySelector('.sheet-body').innerHTML = errorBox(NET_ERR);
   }
@@ -734,8 +979,23 @@ function closeShow() {
   if (wide.matches) renderPlaceholder(); else { $('#sheet').hidden = true; sheetShow = null; }
   render(); // reflect any changes
 }
-const sheetOpen = () => !!(history.state?.show || history.state?.settings);
+const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie);
+function pushSheet(st, hash) { if (wide.matches && sheetOpen()) history.replaceState(st, '', hash); else history.pushState(st, '', hash); }
+function showSheet() {
+  const sh = $('#sheet'); sh.hidden = false; sh.scrollTop = 0; sheetShow = null;
+  if (!wide.matches) document.body.style.overflow = 'hidden';
+  document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
+}
+let sheetTrailerNode = null;
 function renderSheet() {
+  // keep the trailer element (and a playing video) across re-renders of the sheet
+  const oldTrailer = document.querySelector('#sheet #trailerPanel');
+  if (oldTrailer) sheetTrailerNode = oldTrailer;
+  renderSheetInner();
+  const slot = document.querySelector('#sheet #trailerPanel');
+  if (slot && sheetTrailerNode && sheetTrailerNode !== slot) slot.replaceWith(sheetTrailerNode);
+}
+function renderSheetInner() {
   const s = sheetShow, eps = regular(sheetEps), p = progressOf(s.id, sheetEps), followed = !!state.follows[s.id];
   const seasons = [...new Set(eps.map(e => e.s))];
   const inSeason = eps.filter(e => e.s === sheetSeason);
@@ -753,6 +1013,7 @@ function renderSheet() {
         <div class="actions"><button class="btn ${followed ? 'soft' : 'primary'}" data-follow>${followed ? ICON.check + 'A listádon' : ICON.plus + 'Listára teszem'}</button>
           <button class="btn ghost" data-where>Hol nézhető?</button></div>
       </div></div>
+      ${trailerPanel()}
       ${s.summary ? `<div><p class="summary ${summaryOpen ? '' : 'clamp'}" lang="${s.lang === 'Hungarian' ? 'hu' : 'en'}">${esc(s.summary)}</p>${s.summary.length > 220 ? `<button class="linkbtn" data-more>${summaryOpen ? 'Kevesebb' : 'Tovább olvasom'}</button>` : ''}</div>` : ''}
       <div class="stat"><div><b>${p.watched}</b><span>megnézett rész</span></div><div><b>${Math.max(p.aired - p.watched, 0)}</b><span>hátralévő rész</span></div><div><b>${seasons.length}</b><span>évad</span></div></div>
       ${nextLine ? `<div class="note" style="color:var(--fg)">${nextLine}</div>` : ''}
@@ -775,14 +1036,20 @@ function renderSheet() {
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-genre],[data-iamore],[data-tmdb]');
   if (!t) return;
+  if (t.dataset.yt) { playYouTube(t); return; }
+  if (t.dataset.film) { openFilm(t.dataset.film); return; }
+  if (t.dataset.movie) { openMovie(+t.dataset.movie); return; }
+  if (t.dataset.genre) { iaGenre = t.dataset.genre; iaPage = 1; document.querySelectorAll('[data-genre]').forEach(b => b.setAttribute('aria-pressed', b === t)); const id = renderId; loadIA(() => id === renderId, false); return; }
+  if (t.hasAttribute('data-iamore')) { iaPage++; t.disabled = true; t.textContent = 'Betöltés…'; const id = renderId; loadIA(() => id === renderId, true); return; }
+  if (t.dataset.tmdb) { saveTmdb(t.dataset.tmdb === 'clear'); return; }
   if (t.dataset.tab) { if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
   if (t.hasAttribute('data-close')) { sheetOpen() ? history.back() : closeShow(); return; }
   if (t.hasAttribute('data-settings')) {
     if (history.state?.settings) return;
-    if (wide.matches && history.state?.show) { history.replaceState({ settings: 1 }, '', '#beallitasok'); openSettings(false); } else openSettings();
+    if (sheetOpen()) { history.replaceState({ settings: 1 }, '', '#beallitasok'); openSettings(false); } else openSettings();
     return;
   }
   if (t.dataset.service) {
@@ -815,7 +1082,10 @@ document.addEventListener('click', async e => {
 });
 window.addEventListener('popstate', () => {
   const m = location.hash.match(/^#sorozat-(\d+)$/);
+  const f = location.hash.match(/^#film-(.+)$/), mv = location.hash.match(/^#mozi-(\d+)$/);
   if (m) openShow(+m[1], false);
+  else if (f) openFilm(decodeURIComponent(f[1]), false);
+  else if (mv) openMovie(+mv[1], false);
   else if (location.hash === '#beallitasok') openSettings(false);
   else closeShow();
 });
@@ -839,6 +1109,8 @@ render();
 const m0 = location.hash.match(/^#sorozat-(\d+)$/);
 if (m0) { history.replaceState(null, '', location.pathname); history.pushState({ show: +m0[1] }, '', '#sorozat-' + m0[1]); openShow(+m0[1], false); }
 else if (location.hash === '#beallitasok') { history.replaceState(null, '', location.pathname); openSettings(); }
+else if (/^#film-.+/.test(location.hash)) { const id = decodeURIComponent(location.hash.slice(6)); history.replaceState(null, '', location.pathname); openFilm(id); }
+else if (/^#mozi-\d+$/.test(location.hash)) { const id = +location.hash.slice(6); history.replaceState(null, '', location.pathname); openMovie(id); }
 else if (location.hash) history.replaceState(null, '', location.pathname);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
