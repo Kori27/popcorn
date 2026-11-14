@@ -190,15 +190,53 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
   background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow);
   max-width:calc(100% - 32px);text-align:center}
 
+.top-inner .right{display:flex;align-items:center;gap:10px;min-width:0}
+.top .iconbtn{width:38px;height:38px;box-shadow:none;background:var(--surface-2)}
+.top .iconbtn svg{width:20px;height:20px}
+.card .meta.mine{color:var(--ok);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;cursor:pointer;color:var(--fg);display:inline-flex;align-items:center;gap:6px}
+.chip svg{width:16px;height:16px;display:none}
+.chip[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.chip[aria-pressed="true"] svg{display:block}
+.panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{margin:0;font:600 17px/1.25 var(--font-display)}
+.panel p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
+.where{display:flex;flex-direction:column}
+.where a{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);color:var(--fg);text-decoration:none}
+.where a:last-child{border-bottom:0}
+.where a b{font-weight:600}
+.where a small{grid-column:1;color:var(--muted);font-size:12.5px}
+.where a svg{grid-row:1/3;grid-column:2;width:18px;height:18px;color:var(--muted)}
+.new-dot{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;background:var(--accent);color:var(--accent-fg);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.placeholder{display:grid;place-items:center;text-align:center;min-height:70vh;color:var(--muted);padding:24px}
+.placeholder b{display:block;color:var(--fg);font:600 18px/1.3 var(--font-display);margin-bottom:6px}
+
 @media (min-width:560px){
   .hero{grid-template-columns:160px 1fr}
   .grid{grid-template-columns:repeat(auto-fill,minmax(124px,1fr))}
 }
+/* Tablet / landscape: list on the left, detail pane fixed on the right */
+@media (min-width:900px){
+  :root{--pane:min(46vw,580px)}
+  body{padding-right:var(--pane)}
+  .tabbar{right:var(--pane)}
+  .toast{left:calc((100% - var(--pane)) / 2)}
+  .sheet{left:auto;right:0;width:var(--pane);border-left:1px solid var(--line);animation:none;z-index:26}
+  .sheet .sheet-body{padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px))}
+  .sheet .hero{grid-template-columns:130px 1fr}
+  .sheet [data-close] .ico-back{display:none}
+  .sheet [data-close] .ico-x{display:grid}
+  .card.active .poster{outline:3px solid var(--accent);outline-offset:2px}
+}
+.iconbtn .ico-back{display:grid}
+.iconbtn .ico-x{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<header class="top" id="top"><div class="top-inner"><h1 id="title">Kezdőlap</h1><span class="sub" id="sub"></span></div></header>
+<header class="top" id="top"><div class="top-inner"><h1 id="title">Kezdőlap</h1><div class="right"><span class="sub" id="sub"></span>
+  <button class="iconbtn" data-settings aria-label="Beállítások"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></div></div></header>
 <main id="view" aria-live="polite"></main>
 
 <nav class="tabbar" aria-label="Fő menü"><div class="tabbar-inner">
@@ -220,6 +258,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 const API = 'https://api.tvmaze.com';
 const H = 3600e3, DAY = 24 * H;
 const $ = s => document.querySelector(s);
+const wide = matchMedia('(min-width:900px)');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON = {
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
@@ -244,7 +283,32 @@ const ls = {
   }
 };
 let state = ls.get('sn.state', null) || { follows: {}, watched: {} };
-const save = () => { ls.set('sn.state', state); updateBadge(); };
+state.services = state.services || [];
+state.notify = !!state.notify;
+const prevVisit = state.lastVisit || Date.now();
+const save = () => { ls.set('sn.state', state); updateBadge(); syncWorkerData(); };
+
+/* ---------- streaming services (matched by the show's original channel) ---------- */
+const SERVICES = [
+  { id: 'netflix', name: 'Netflix', match: ['netflix'] },
+  { id: 'hbo', name: 'HBO Max', match: ['hbo', 'hbo max', 'max', 'cinemax'] },
+  { id: 'disney', name: 'Disney+', match: ['disney+', 'hulu', 'fx', 'fx on hulu', 'abc', 'national geographic', 'disney channel'] },
+  { id: 'apple', name: 'Apple TV+', match: ['apple tv+', 'apple tv'] },
+  { id: 'prime', name: 'Prime Video', match: ['prime video', 'amazon', 'amazon freevee'] },
+  { id: 'sky', name: 'SkyShowtime', match: ['skyshowtime', 'peacock', 'paramount+', 'showtime', 'nbc', 'cbs', 'paramount network'] },
+  { id: 'rtl', name: 'RTL+', match: ['rtl', 'rtl klub', 'rtl+', 'rtl kettő', 'rtl ii', 'rtl gold'], free: true, url: 'https://www.rtlplusz.hu/kereses' },
+  { id: 'tv2', name: 'TV2 Play', match: ['tv2', 'super tv2', 'tv2 play', 'tv2 comedy', 'tv2 kids'], free: true, url: 'https://tv2play.hu/kereses' },
+  { id: 'mtva', name: 'Médiaklikk', match: ['m1', 'm2', 'm4 sport', 'm5', 'duna', 'duna tv', 'duna world', 'mtva', 'médiaklikk'], free: true }
+];
+const serviceOf = s => { const n = (s?.network || '').toLowerCase().trim(); return n ? SERVICES.find(sv => sv.match.includes(n)) || null : null; };
+const mine = s => { const sv = serviceOf(s); return sv && state.services.includes(sv.id) ? sv : null; };
+
+/* ---------- data shared with the service worker (background new-episode check) ---------- */
+function syncWorkerData() {
+  if (!('caches' in window)) return;
+  const body = JSON.stringify({ notify: state.notify, follows: Object.values(state.follows).map(f => ({ id: f.id, name: f.name })) });
+  caches.open('sn-data').then(c => c.put('sn-data.json', new Response(body, { headers: { 'Content-Type': 'application/json' } }))).catch(() => {});
+}
 
 /* ---------- API with cache ---------- */
 const inflight = new Map();
@@ -280,6 +344,7 @@ const slimShow = s => s && ({
 const slimEp = e => ({ id: e.id, s: e.season, n: e.number, name: e.name, date: e.airdate, stamp: e.airstamp, rt: e.runtime });
 const getShow = id => api(`/shows/${id}`, DAY, slimShow);
 const getEps = id => api(`/shows/${id}/episodes`, 6 * H, a => a.map(slimEp));
+const getHuName = id => api(`/shows/${id}/akas`, 7 * DAY, a => (a.find(x => x.country?.code === 'HU') || {}).name || null).catch(() => null);
 const searchShows = q => api(`/search/shows?q=${encodeURIComponent(q)}`, H, a => a.map(x => slimShow(x.show)));
 const POPULAR = ['Severance', 'The Last of Us', 'Stranger Things', 'The Bear', 'Wednesday', 'Shōgun', 'Breaking Bad', 'Dark', 'Succession', 'Fallout'];
 const getPopular = () => pool(POPULAR, 4, q => api(`/singlesearch/shows?q=${encodeURIComponent(q)}`, 7 * DAY, slimShow).catch(() => null))
@@ -377,9 +442,13 @@ function render() {
 const skelRows = n => `<div class="list">${Array.from({ length: n }, () => `<div class="row"><div class="skel" style="width:52px;aspect-ratio:2/3"></div><div style="display:flex;flex-direction:column;gap:6px"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:12px;width:80%"></div></div><span></span></div>`).join('')}</div>`;
 const skelGrid = n => `<div class="grid">${Array.from({ length: n }, () => `<div><div class="skel" style="aspect-ratio:2/3"></div></div>`).join('')}</div>`;
 const posterImg = s => s.img ? `<img class="poster" src="${esc(s.img)}" alt="" loading="lazy">` : `<div class="poster-ph">${esc(s.name)}</div>`;
-const showCard = (s, extra = '') => `<button class="card" data-open="${s.id}" aria-label="${esc(s.name)}">
+const showCard = (s, extra = '') => {
+  const sv = mine(s);
+  const meta = sv ? `<span class="meta mine">✓ ${esc(sv.name)}</span>` : `<span class="meta">${esc([year(s), s.network].filter(Boolean).join(' · '))}</span>`;
+  return `<button class="card${wide.matches && sheetShow?.id === s.id ? ' active' : ''}" data-open="${s.id}" aria-label="${esc(s.name)}">
   ${posterImg(s)}${state.follows[s.id] ? `<span class="flag" title="A listádon">${ICON.check}</span>` : ''}
-  <span class="name">${esc(s.name)}</span>${extra || `<span class="meta">${esc([year(s), s.network].filter(Boolean).join(' · '))}</span>`}</button>`;
+  <span class="name">${esc(s.name)}</span>${extra}${extra && !sv ? '' : meta}</button>`;
+};
 const errorBox = msg => `<div class="error">${esc(msg)}</div>`;
 const NET_ERR = 'Nem sikerült elérni a sorozat-adatbázist. Ellenőrizd az internetkapcsolatot, és próbáld újra.';
 
@@ -390,32 +459,39 @@ async function renderHome(v, alive) {
     v.innerHTML = `<div class="empty"><h3>Kövesd a sorozataidat egy helyen</h3>
       <p>Keress rá egy sorozatra, tedd fel a listádra, és pipáld ki a megnézett részeket. Itt mindig látod, melyik rész jön legközelebb, és mikor jelenik meg az új epizód.</p>
       <button class="btn primary" data-tab="search">${ICON.search}Sorozat keresése</button></div>
+      ${servicesSection()}
       <section><div class="sec-head"><h2>Népszerű sorozatok</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
-    loadPopular(alive);
+    loadPopular(alive); loadOnMine(alive);
     return;
   }
   v.innerHTML = `<section><div class="sec-head"><h2>Folytasd</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
     <section><div class="sec-head"><h2>Hamarosan</h2><span class="count">következő 14 nap</span></div><div id="soon">${skelRows(2)}</div></section>
+    ${servicesSection()}
     <section><div class="sec-head"><h2>Népszerű sorozatok</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
+  loadOnMine(alive);
   let data;
   try { data = await pool(ids, 4, async id => ({ show: state.follows[id], eps: await getEps(id) || [] })); }
   catch { if (alive()) { $('#next').innerHTML = errorBox(NET_ERR); $('#soon').innerHTML = ''; } return; }
   if (!alive()) return;
   const next = [], soon = [], end = addDays(today(), 14);
+  let fresh = 0;
   for (const { show, eps } of data) {
     const p = progressOf(show.id, eps);
     if (p.next) next.push({ show, ep: p.next, left: p.aired - p.watched });
     regular(eps).filter(e => !aired(e) && e.date && e.date <= end).forEach(e => soon.push({ show, ep: e }));
+    fresh += regular(eps).filter(e => aired(e) && isNew(e) && !isWatched(show.id, e.id)).length;
   }
+  if (fresh && !renderHome.announced) { renderHome.announced = true; toast(fresh === 1 ? '1 új rész jelent meg, amióta legutóbb itt jártál' : `${fresh} új rész jelent meg, amióta legutóbb itt jártál`); }
+  state.lastVisit = Date.now(); ls.set('sn.state', state);
   next.sort((a, b) => (b.ep.date || '').localeCompare(a.ep.date || ''));
   $('#nextCount').textContent = next.length ? `${next.length} sorozat` : '';
   $('#next').innerHTML = next.length ? `<div class="list">${next.map(({ show, ep, left }) => `
     <div class="row">
       <img class="thumb" src="${esc(show.img || '')}" alt="" data-open="${show.id}" loading="lazy">
       <div class="body" data-open="${show.id}">
-        <div class="t1">${esc(show.name)}</div>
+        <div class="t1">${esc(show.name)}${isNew(ep) ? '<span class="new-dot">ÚJ</span>' : ''}</div>
         <div class="t2"><span class="code">${code(ep)}</span> · ${esc(ep.name)}</div>
-        <div class="t3">${left > 1 ? `még ${left} rész vár rád` : 'az utolsó megjelent rész'} · ${fmtDate(ep.date)}</div>
+        <div class="t3">${left > 1 ? `még ${left} rész vár rád` : 'az utolsó megjelent rész'} · ${fmtDate(ep.date)}${mine(show) ? ` · <b style="color:var(--ok)">${esc(mine(show).name)}</b>` : ''}</div>
       </div>
       <button class="check" data-ep="${show.id}:${ep.id}" aria-pressed="false" aria-label="${esc(code(ep))} megnézve">${ICON.check}</button>
     </div>`).join('')}</div>`
@@ -423,6 +499,24 @@ async function renderHome(v, alive) {
   soon.sort((a, b) => (a.ep.stamp || a.ep.date).localeCompare(b.ep.stamp || b.ep.date));
   $('#soon').innerHTML = soon.length ? groupByDay(soon) : `<p class="note">A követett sorozataidnak nincs új része a következő két hétben.</p>`;
   loadPopular(alive);
+}
+const isNew = e => !!e.stamp && Date.parse(e.stamp) > prevVisit && aired(e);
+function servicesSection() {
+  if (!state.services.length) return `<div class="panel"><h3>Mire fizetsz elő?</h3>
+    <p>Jelöld be a szolgáltatóidat, és az app kiemeli azokat a sorozatokat, amelyeket nálad meg tudsz nézni.</p>
+    <div><button class="btn soft" data-settings>Szolgáltatók kiválasztása</button></div></div>`;
+  return `<section><div class="sec-head"><h2>A szolgáltatóidon</h2><span class="count">${esc(SERVICES.filter(s => state.services.includes(s.id)).map(s => s.name).join(', '))}</span></div><div id="onmine">${skelGrid(3)}</div></section>`;
+}
+async function loadOnMine(alive) {
+  if (!state.services.length || !$('#onmine')) return;
+  try {
+    const [pop, web] = await Promise.all([getPopular(), api(`/schedule/web?date=${today()}`, 3 * H, a => a.map(x => slimShow(x._embedded?.show || x.show))).catch(() => [])]);
+    if (!alive() || !$('#onmine')) return;
+    const seen = new Set(), list = [...pop, ...(web || []).filter(s => (s?.weight || 0) >= 80).sort((a, b) => (b.weight || 0) - (a.weight || 0))]
+      .filter(s => s && mine(s) && !state.follows[s.id] && !seen.has(s.id) && seen.add(s.id)).slice(0, 12);
+    $('#onmine').innerHTML = list.length ? `<div class="rail">${list.map(s => showCard(s)).join('')}</div>`
+      : `<p class="note">Most nincs új ajánlás a szolgáltatóidon. Keress rá egy sorozatra, és az adatlapján látod, hol nézhető.</p>`;
+  } catch { if (alive() && $('#onmine')) $('#onmine').innerHTML = errorBox(NET_ERR); }
 }
 async function loadPopular(alive) {
   try {
@@ -535,19 +629,94 @@ async function renderLibrary(v, alive) {
 }
 
 /* ---------- Detail sheet ---------- */
-let sheetShow = null, sheetSeason = null, sheetEps = [], summaryOpen = false;
+let sheetShow = null, sheetSeason = null, sheetEps = [], summaryOpen = false, sheetHu = null;
+function whereSection(s) {
+  const sv = serviceOf(s), my = mine(s), title = sheetHu || s.name, q = encodeURIComponent(title);
+  const link = (href, name, note) => `<a href="${esc(href)}" target="_blank" rel="noopener"><b>${esc(name)}</b><small>${esc(note)}</small>${ICON.ext}</a>`;
+  const rows = [link(`https://www.justwatch.com/hu/search?q=${encodeURIComponent(s.name)}`, 'JustWatch', 'Minden magyarországi szolgáltató egy helyen, az ingyenes lehetőségekkel együtt')];
+  if (sv?.id === 'mtva' || !sv || sv.free) rows.push(link(`https://mediaklikk.hu/?s=${q}`, 'Médiaklikk', 'Ingyenes közmédia (M1, Duna, M2) · keresés erre: ' + title));
+  if (sv?.id === 'rtl') rows.push(link(sv.url, 'RTL+', `Részben ingyenes · megnyitja a keresőt, írd be: ${title}`));
+  if (sv?.id === 'tv2') rows.push(link(sv.url, 'TV2 Play', `Részben ingyenes · megnyitja a keresőt, írd be: ${title}`));
+  const head = my ? `<span class="pill ok">✓ Valószínűleg benne van: ${esc(my.name)}</span>`
+    : sv ? `<span class="pill ${sv.free ? 'ok' : 'neutral'}">Eredeti csatorna: ${esc(sv.name)}${sv.free ? ' · ingyenes is lehet' : ''}</span>` : '';
+  return `<div class="panel" id="where"><h3>Hol nézhető?</h3>${head ? `<div>${head}</div>` : ''}
+    <div class="where">${rows.join('')}</div>
+    <p>Az előfizetéses egyezést az eredeti csatorna alapján becsüljük. Magyarországon egy sorozat néha máshol fut, ezt a JustWatch pontosan mutatja.</p></div>`;
+}
+function renderPlaceholder() {
+  sheetShow = null;
+  $('#sheet').hidden = false;
+  $('#sheet').innerHTML = `<div class="placeholder"><div><b>Válassz egy sorozatot</b>Koppints bármelyik sorozatra, és itt jelenik meg az adatlapja.</div></div>`;
+  document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
+}
+function markActive(id) { document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', wide.matches && +c.dataset.open === id)); }
+const closeBtn = `<button class="iconbtn" data-close aria-label="Bezárás"><span class="ico-back">${ICON.back}</span><span class="ico-x">${ICON.x}</span></button>`;
+
+/* ---------- Settings ---------- */
+function openSettings(push = true) {
+  if (push) history.pushState({ settings: 1 }, '', '#beallitasok');
+  const sh = $('#sheet'); sh.hidden = false; sh.scrollTop = 0; sheetShow = null;
+  if (!wide.matches) document.body.style.overflow = 'hidden';
+  renderSettings();
+}
+async function renderSettings() {
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration().catch(() => null) : null;
+  const bg = !!(reg && 'periodicSync' in reg);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let notifNote;
+  if (perm === 'unsupported') notifNote = 'Ez a böngésző nem támogat értesítéseket. iPhone-on előbb tedd ki az appot a főképernyőre, és onnan nyisd meg.';
+  else if (perm === 'denied') notifNote = 'Az értesítések le vannak tiltva ennél az oldalnál. A böngésző vagy a telefon beállításaiban tudod engedélyezni.';
+  else if (bg) notifNote = 'A telefon a háttérben is ellenőrzi az új részeket. A gyakoriságot a rendszer dönti el, általában naponta egyszer.';
+  else notifNote = standalone ? 'Ezen az eszközön a háttérben futó ellenőrzés nem támogatott, ezért az új részeket az app megnyitásakor jelezzük („ÚJ” jelölés és üzenet).'
+    : 'A háttérben futó ellenőrzéshez telepítsd az appot a kezdőképernyőre (Androidon Chrome-mal). Addig az új részeket megnyitáskor jelezzük.';
+  $('#sheet').innerHTML = `<div class="sheet-bar">${closeBtn}</div>
+    <div class="sheet-body"><h2 style="font:800 26px/1.1 var(--font-display);margin:0">Beállítások</h2>
+    <div class="panel"><h3>Szolgáltatóim</h3><p>Jelöld be, mire fizetsz elő, vagy mit nézel ingyen. Ezeket kiemeljük a kezdőlapon és az adatlapokon.</p>
+      <div class="chips">${SERVICES.map(s => `<button class="chip" data-service="${s.id}" aria-pressed="${state.services.includes(s.id)}">${ICON.check}${esc(s.name)}${s.free ? ' <span style="opacity:.7">(ingyenes is)</span>' : ''}</button>`).join('')}</div></div>
+    <div class="panel"><h3>Értesítés új részekről</h3><p>${esc(notifNote)}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${perm === 'unsupported' || perm === 'denied' ? '' :
+        state.notify && perm === 'granted'
+          ? `<button class="btn ghost" data-notify="off">Értesítések kikapcsolása</button><button class="btn soft" data-notify="test">Próbaértesítés</button>`
+          : `<button class="btn primary" data-notify="on">Értesítések bekapcsolása</button>`}</div></div>
+    <div class="panel"><h3>Adatok</h3><p>A listád és a megnézett részek csak ezen az eszközön vannak tárolva. A sorozatadatok forrása a TVmaze nyilvános adatbázisa.</p></div>
+    </div>`;
+}
+async function setNotify(on) {
+  if (!on) { state.notify = false; save(); toast('Értesítések kikapcsolva'); return renderSettings(); }
+  const perm = await Notification.requestPermission().catch(() => 'denied');
+  if (perm !== 'granted') { toast('Az értesítések nincsenek engedélyezve'); return renderSettings(); }
+  state.notify = true; save();
+  try { const c = await caches.open('sn-data'); await c.put('sn-check.json', new Response(JSON.stringify({ last: Date.now() }))); } catch {}
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if ('periodicSync' in reg) await reg.periodicSync.register('new-episodes', { minInterval: 12 * H });
+  } catch {}
+  toast('Értesítések bekapcsolva');
+  renderSettings();
+}
+async function testNotify() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Sorozatnapló', { body: 'Így fog kinézni, ha új rész jelenik meg egy követett sorozatodból.', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'test' });
+  } catch { toast('A próbaértesítés nem sikerült ezen az eszközön'); }
+}
 async function openShow(id, push = true) {
   const sh = $('#sheet');
-  if (push) history.pushState({ show: id }, '', '#sorozat-' + id);
-  sh.hidden = false; sh.scrollTop = 0; document.body.style.overflow = 'hidden';
-  sheetShow = null; sheetSeason = null; summaryOpen = false;
-  sh.innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Vissza">${ICON.back}</button></div>
+  if (push) {
+    if (wide.matches && (history.state?.show || history.state?.settings)) history.replaceState({ show: id }, '', '#sorozat-' + id);
+    else history.pushState({ show: id }, '', '#sorozat-' + id);
+  }
+  sh.hidden = false; sh.scrollTop = 0; if (!wide.matches) document.body.style.overflow = 'hidden';
+  sheetShow = null; sheetSeason = null; summaryOpen = false; sheetHu = null;
+  markActive(id);
+  sh.innerHTML = `<div class="sheet-bar">${closeBtn}</div>
     <div class="sheet-body"><div class="hero"><div class="skel" style="aspect-ratio:2/3"></div><div style="display:flex;flex-direction:column;gap:10px"><div class="skel" style="height:26px;width:80%"></div><div class="skel" style="height:14px;width:50%"></div></div></div>${skelRows(5)}</div>`;
   try {
-    const [show, eps] = await Promise.all([getShow(id), getEps(id)]);
+    const [show, eps, hu] = await Promise.all([getShow(id), getEps(id), getHuName(id)]);
     if (!show) throw new Error('missing');
-    if (sh.hidden) return;
-    sheetShow = show; sheetEps = eps || [];
+    if (sh.hidden || location.hash !== '#sorozat-' + id) return;
+    sheetShow = show; sheetEps = eps || []; sheetHu = hu;
     if (state.follows[id]) { // keep stored summary fresh (status, poster)
       Object.assign(state.follows[id], { name: show.name, img: show.img, network: show.network, status: show.status }); save();
     }
@@ -560,9 +729,12 @@ async function openShow(id, push = true) {
   }
 }
 function closeShow() {
-  $('#sheet').hidden = true; document.body.style.overflow = '';
+  document.body.style.overflow = '';
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  if (wide.matches) renderPlaceholder(); else { $('#sheet').hidden = true; sheetShow = null; }
   render(); // reflect any changes
 }
+const sheetOpen = () => !!(history.state?.show || history.state?.settings);
 function renderSheet() {
   const s = sheetShow, eps = regular(sheetEps), p = progressOf(s.id, sheetEps), followed = !!state.follows[s.id];
   const seasons = [...new Set(eps.map(e => e.s))];
@@ -572,18 +744,19 @@ function renderSheet() {
   const facts = [statusPill(s.status), s.rating ? `<span class="pill neutral">★ ${s.rating.toFixed(1)}</span>` : '', s.runtime ? `<span class="pill neutral">${s.runtime} perc</span>` : '', ...s.genres.slice(0, 3).map(g => `<span class="pill neutral">${esc(g)}</span>`)].join('');
   const years = s.premiered ? (s.ended ? `${s.premiered.slice(0, 4)}–${s.ended.slice(0, 4)}` : `${s.premiered.slice(0, 4)}–`) : '';
   const nextLine = p.next ? `Következő: <span class="code">${code(p.next)}</span> · ${esc(p.next.name)}` : p.upcoming ? `Új rész: <span class="code">${code(p.upcoming)}</span> · ${fmtDate(p.upcoming.date)}` : '';
-  $('#sheet').innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Vissza">${ICON.back}</button>
+  $('#sheet').innerHTML = `<div class="sheet-bar">${closeBtn}
       ${s.url ? `<a class="iconbtn" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="Megnyitás a TVmaze-en">${ICON.ext}</a>` : ''}</div>
     <div class="sheet-body">
       <div class="hero">${posterImg(s)}<div style="min-width:0">
-        <h2>${esc(s.name)}</h2><div class="note">${esc([years, s.network].filter(Boolean).join(' · '))}</div>
+        <h2>${esc(s.name)}</h2>${sheetHu && sheetHu !== s.name ? `<div class="note" style="color:var(--fg)">Magyar cím: ${esc(sheetHu)}</div>` : ''}<div class="note">${esc([years, s.network].filter(Boolean).join(' · '))}</div>
         <div class="facts">${facts}</div>
         <div class="actions"><button class="btn ${followed ? 'soft' : 'primary'}" data-follow>${followed ? ICON.check + 'A listádon' : ICON.plus + 'Listára teszem'}</button>
-          <a class="btn ghost" href="https://www.justwatch.com/hu/search?q=${encodeURIComponent(s.name)}" target="_blank" rel="noopener" style="text-decoration:none">${ICON.ext}Hol nézhető?</a></div>
+          <button class="btn ghost" data-where>Hol nézhető?</button></div>
       </div></div>
       ${s.summary ? `<div><p class="summary ${summaryOpen ? '' : 'clamp'}" lang="${s.lang === 'Hungarian' ? 'hu' : 'en'}">${esc(s.summary)}</p>${s.summary.length > 220 ? `<button class="linkbtn" data-more>${summaryOpen ? 'Kevesebb' : 'Tovább olvasom'}</button>` : ''}</div>` : ''}
       <div class="stat"><div><b>${p.watched}</b><span>megnézett rész</span></div><div><b>${Math.max(p.aired - p.watched, 0)}</b><span>hátralévő rész</span></div><div><b>${seasons.length}</b><span>évad</span></div></div>
       ${nextLine ? `<div class="note" style="color:var(--fg)">${nextLine}</div>` : ''}
+      ${whereSection(s)}
       ${seasons.length ? `<section>
         <div class="seg" role="group" aria-label="Évad választása">${seasons.map(n => {
           const se = eps.filter(e => e.s === n && aired(e)); const done = se.length && se.every(e => isWatched(s.id, e.id));
@@ -602,11 +775,25 @@ function renderSheet() {
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where]');
   if (!t) return;
-  if (t.dataset.tab) { if (!$('#sheet').hidden) history.back(); setTab(t.dataset.tab); return; }
+  if (t.dataset.tab) { if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
-  if (t.hasAttribute('data-close')) { history.state?.show ? history.back() : closeShow(); return; }
+  if (t.hasAttribute('data-close')) { sheetOpen() ? history.back() : closeShow(); return; }
+  if (t.hasAttribute('data-settings')) {
+    if (history.state?.settings) return;
+    if (wide.matches && history.state?.show) { history.replaceState({ settings: 1 }, '', '#beallitasok'); openSettings(false); } else openSettings();
+    return;
+  }
+  if (t.dataset.service) {
+    const id = t.dataset.service, i = state.services.indexOf(id);
+    i >= 0 ? state.services.splice(i, 1) : state.services.push(id);
+    save(); t.setAttribute('aria-pressed', i < 0);
+    if (wide.matches) render();
+    return;
+  }
+  if (t.dataset.notify) { t.dataset.notify === 'test' ? testNotify() : setNotify(t.dataset.notify === 'on'); return; }
+  if (t.hasAttribute('data-where')) { $('#where')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return; }
   if (t.dataset.seg) { calSeg = t.dataset.seg; render(); return; }
   if (t.hasAttribute('data-more')) { summaryOpen = !summaryOpen; renderSheet(); return; }
   if (t.hasAttribute('data-follow')) { toggleFollow(sheetShow); renderSheet(); return; }
@@ -629,18 +816,30 @@ document.addEventListener('click', async e => {
 window.addEventListener('popstate', () => {
   const m = location.hash.match(/^#sorozat-(\d+)$/);
   if (m) openShow(+m[1], false);
-  else if (!$('#sheet').hidden) closeShow();
+  else if (location.hash === '#beallitasok') openSettings(false);
+  else closeShow();
 });
 window.addEventListener('scroll', () => $('#top').classList.toggle('scrolled', scrollY > 4), { passive: true });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) history.state?.show ? history.back() : closeShow(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheetOpen()) history.back(); });
+wide.addEventListener('change', () => {
+  document.body.style.overflow = '';
+  if (sheetOpen()) { if (!wide.matches) document.body.style.overflow = 'hidden'; return; }
+  if (wide.matches) renderPlaceholder(); else $('#sheet').hidden = true;
+  render();
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncWorkerData(); });
 
 /* ---------- start ---------- */
 try { const t = sessionStorage.getItem('sn.tab'); if (TITLES[t]) tab = t; } catch {}
 document.querySelectorAll('.tab').forEach(b => b.dataset.tab === tab ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
 updateBadge();
+syncWorkerData();
+if (wide.matches) renderPlaceholder();
 render();
 const m0 = location.hash.match(/^#sorozat-(\d+)$/);
 if (m0) { history.replaceState(null, '', location.pathname); history.pushState({ show: +m0[1] }, '', '#sorozat-' + m0[1]); openShow(+m0[1], false); }
+else if (location.hash === '#beallitasok') { history.replaceState(null, '', location.pathname); openSettings(); }
+else if (location.hash) history.replaceState(null, '', location.pathname);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
