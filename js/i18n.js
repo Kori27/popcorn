@@ -208,7 +208,11 @@ const I18N_ROWS = [
   ['Felfedezés', 'Explore', 'Entdecken'], ['Kiemelt ajánlat', 'Featured pick', 'Empfehlung'], ['Fedezd fel a sorozatot', 'Discover the series', 'Entdecke die Serie'], ['Adatlap megnyitása', 'Open details', 'Details öffnen'],
   ['Folytatás innen: {time}', 'Resuming from {time}', 'Weiter ab {time}'],
   // account
-  ['Fiók', 'Account', 'Konto'], ['Felhasználó', 'User', 'Nutzer'], ['vagy', 'or', 'oder'], ['E-mail-cím', 'E-mail address', 'E-Mail-Adresse'], ['Jelszó', 'Password', 'Passwort'],
+  ['Fiók', 'Account', 'Konto'],
+  ['Ha a(z) {email} címmel van jelszavas fiók, pár percen belül megérkezik a levél. Nézd meg a Spam és a Promóciók mappát is (feladó: {from}). Ha Google-lel regisztráltál, nincs jelszavad: lépj be a Google-gombbal.',
+    'If there is a password account for {email}, the e-mail arrives within a few minutes. Check Spam and Promotions too (sender: {from}). If you signed up with Google, you have no password: use the Google button.',
+    'Wenn es für {email} ein Konto mit Passwort gibt, kommt die E-Mail in wenigen Minuten. Sieh auch im Spam- und Werbeordner nach (Absender: {from}). Wenn du dich mit Google registriert hast, hast du kein Passwort: nutze den Google-Button.'],
+  ['Ugrás a Kezdőlapra', 'Go to Home', 'Zur Startseite'], ['Felhasználó', 'User', 'Nutzer'], ['vagy', 'or', 'oder'], ['E-mail-cím', 'E-mail address', 'E-Mail-Adresse'], ['Jelszó', 'Password', 'Passwort'],
   ['Jelszó (legalább 6 karakter)', 'Password (at least 6 characters)', 'Passwort (mindestens 6 Zeichen)'], ['Belépés', 'Sign in', 'Anmelden'], ['Regisztráció', 'Create account', 'Registrieren'],
   ['Elfelejtett jelszó', 'Forgot password', 'Passwort vergessen'], ['Belépés Google-fiókkal', 'Sign in with Google', 'Mit Google anmelden'], ['Kijelentkezés', 'Sign out', 'Abmelden'],
   ['Szinkronizálás most', 'Sync now', 'Jetzt synchronisieren'], ['Szinkronizálás…', 'Syncing…', 'Wird synchronisiert…'], ['Szinkronizálva: {t}', 'Synced at {t}', 'Synchronisiert um {t}'],
@@ -266,4 +270,5 @@ function applyStaticI18n() {
   document.documentElement.lang = state.lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', tr(el.dataset.i18nAria)));
+  document.querySelectorAll('[data-i18n-title]').forEach(el => el.setAttribute('title', tr(el.dataset.i18nTitle)));
 }

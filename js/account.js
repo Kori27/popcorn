@@ -163,9 +163,12 @@ async function accountAction(kind) {
       cred.user?.sendEmailVerification().catch(() => {});
       toast(tr('Fiók létrehozva. Küldtünk egy megerősítő e-mailt.'));
     } else if (kind === 'reset') {
-      if (!email) { acctMsg('Írd be az e-mail-címedet, és utána kattints újra.'); return; }
+      if (!email) { acctMsg('Írd be az e-mail-címedet, és utána kattints újra.'); $('#acctEmail')?.focus(); return; }
+      acct.auth.languageCode = state.lang;   // the e-mail arrives in the app's language
       await acct.auth.sendPasswordResetEmail(email);
-      acctMsg('Elküldtük a jelszó-visszaállító levelet, ha van ilyen fiók.', true);
+      // Firebase never reveals whether an account exists, so explain the usual reasons for a missing e-mail
+      acctMsg(tr('Ha a(z) {email} címmel van jelszavas fiók, pár percen belül megérkezik a levél. Nézd meg a Spam és a Promóciók mappát is (feladó: {from}). Ha Google-lel regisztráltál, nincs jelszavad: lépj be a Google-gombbal.',
+        { email, from: `noreply@${window.FIREBASE_CONFIG.authDomain}` }), true);
     } else if (kind === 'logout') {
       clearTimeout(acct.timer); await pushNow();
       await acct.auth.signOut();
