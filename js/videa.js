@@ -54,37 +54,55 @@ function loadVideaPlayerAPI() {
 async function searchVideaVideos(query, page = 1) {
   const api = await loadVideaOpenAPI();
   if (typeof api.searchVideos !== 'function') {
-    throw new Error('A Videa OpenAPI betöltődött, de a keresési funkció nem érhető el. Frissítsd az oldalt, majd próbáld újra.');
+    throw new Error('A Videa OpenAPI betöltődött, de a keresési funkció nem érhető el.');
   }
-  try {
-    // First use Videa's general search endpoint.
-    const response = await api.searchVideos(query, page);
-    if (!response || !Array.isArray(response.videos)) {
-      throw new Error('A Videa API váratlan választ adott. Próbáld újra később.');
-    }
-    if (response.videos.length || typeof api.getTagVideos !== 'function') return response;
 
-    // Videa documents tag browsing separately. Try it as a fallback when
-    // general search returns zero results, since some content is discoverable by tag.
-    try {
-      const tagged = await api.getTagVideos(query, 'upload_date', page);
-      if (tagged && Array.isArray(tagged.videos) && tagged.videos.length) {
-        return { ...tagged, _popcornFallback: 'tag' };
-      }
-    } catch (tagError) {
-      console.warn('Videa tag fallback failed:', tagError);
-    }
-    return response;
+  const diagnostics = {
+    query,
+    general: { status: 'not-run', count: null, response: null, error: null },
+    tag: { status: 'not-run', count: null, response: null, error: null }
+  };
+  const preview = value => {
+    try { return JSON.stringify(value, (key, val) => /key|token|secret|password/i.test(key) ? '[rejtve]' : val).slice(0, 1800); }
+    catch { return String(value).slice(0, 1800); }
+  };
+
+  let generalResponse = null;
+  try {
+    generalResponse = await api.searchVideos(query, page);
+    diagnostics.general.status = 'ok';
+    diagnostics.general.count = Array.isArray(generalResponse?.videos) ? generalResponse.videos.length : null;
+    diagnostics.general.response = preview(generalResponse);
   } catch (error) {
-    const message = String(error?.message || error || '');
-    if (/appId invalid/i.test(message)) {
-      throw new Error('A Videa OpenAPI-kulcs érvénytelen. Ellenőrizd, hogy az OpenAPI-kulcsot mentetted-e el (nem a PlayerAPI-kulcsot).');
-    }
-    if (/origin error/i.test(message)) {
-      throw new Error('A Videa nem engedélyezi erről a webhelyről az API használatát. A Videa Beállításokban az OpenAPI-kulcshoz is add hozzá a https://kori27.github.io címet.');
-    }
-    throw new Error(message || 'A Videa keresési kérése sikertelen. Ellenőrizd az OpenAPI-kulcsot és a webhelyengedélyt.');
+    diagnostics.general.status = 'error';
+    diagnostics.general.error = String(error?.message || error);
   }
+
+  let tagResponse = null;
+  if (typeof api.getTagVideos === 'function') {
+    try {
+      tagResponse = await api.getTagVideos(query, 'upload_date', page);
+      diagnostics.tag.status = 'ok';
+      diagnostics.tag.count = Array.isArray(tagResponse?.videos) ? tagResponse.videos.length : null;
+      diagnostics.tag.response = preview(tagResponse);
+    } catch (error) {
+      diagnostics.tag.status = 'error';
+      diagnostics.tag.error = String(error?.message || error);
+    }
+  } else {
+    diagnostics.tag.status = 'unavailable';
+  }
+
+  const generalVideos = Array.isArray(generalResponse?.videos) ? generalResponse.videos : [];
+  const tagVideos = Array.isArray(tagResponse?.videos) ? tagResponse.videos : [];
+  const selected = generalVideos.length ? generalResponse : tagVideos.length ? tagResponse : generalResponse;
+  if (selected && typeof selected === 'object') {
+    return { ...selected, _popcornDiagnostics: diagnostics, _popcornFallback: selected === tagResponse ? 'tag' : 'general' };
+  }
+  if (diagnostics.general.status === 'error' && diagnostics.tag.status === 'error') {
+    throw new Error('A Videa általános és címkekeresése is hibát adott. Részletek a diagnosztikai panelen: ' + diagnostics.general.error + ' / ' + diagnostics.tag.error);
+  }
+  return { videos: [], totalhits: 0, _popcornDiagnostics: diagnostics };
 }
 
 async function getVideaVideo(videoId) {

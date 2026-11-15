@@ -68,7 +68,13 @@ async function runSearch(alive) {
           ${v.thumbnail ? `<img class="poster" src="${esc(v.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
           <span class="name">${esc(v.title || 'Névtelen videó')}</span>
           <span class="meta">${esc([v.duration, v.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
-        : `<div class="empty"><h3>Nincs Videa-találat</h3><p>A Videa API sikeres választ adott, de erre a kifejezésre nem küldött videókat. Próbálj rövidebb címet vagy egyetlen kulcsszót.</p><p class="note">Ha több különböző keresésre is nulla találat érkezik, ellenőrizd a Beállításokban az OpenAPI-kulcsot és az OpenAPI-kulcshoz megadott webhelyengedélyt.</p></div>`;
+        : (() => {
+          const d = response?._popcornDiagnostics;
+          const line = (name, item) => `<div class="note"><strong>${name}:</strong> ${esc(item?.status || 'ismeretlen')} · találat: ${item?.count == null ? 'nem értelmezhető' : item.count}${item?.error ? `<br>Hiba: ${esc(item.error)}` : ''}${item?.response ? `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto">${esc(item.response)}</pre>` : ''}</div>`;
+          return `<div class="empty"><h3>Nincs Videa-találat</h3><p>A Videa OpenAPI válaszát külön ellenőriztük mindkét keresési módszerrel.</p>
+            ${d ? `${line('Általános keresés', d.general)}${line('Címkekeresés', d.tag)}` : '<p class="note">Nem érkezett diagnosztikai adat.</p>'}
+            <p class="note">A diagnosztika nem jeleníti meg az API-kulcsot. A nyers válasz rövidített változata segít megállapítani, hogy a Videa melyik keresési módszere ad üres eredményt.</p></div>`;
+        })();
     } catch (err) {
       if (!stale()) box.innerHTML = `<div class="empty"><h3>Nem sikerült a Videa-keresés</h3><p>${esc(err?.message || 'Ellenőrizd az OpenAPI-kulcsot és a webhelyengedélyt a Beállításokban.')}</p><p class="note">Fontos: a kereséshez az OpenAPI-kulcs kell. A PlayerAPI-kulcs csak a beágyazott lejátszó vezérlésére szolgál.</p></div>`;
     }
