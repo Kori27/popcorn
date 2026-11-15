@@ -2,6 +2,8 @@
 'use strict';
 
 let searchKind = 'tv';
+let videaCurrentPage = 1;
+let videaLoadingMore = false;
 const SEARCH_DECADES = [['', 'Bármikor'], ['2020', '2020 után'], ['2010', '2010-es évek'], ['2000', '2000-es évek'], ['1990', '1990-es évek'], ['old', '1990 előtt']];
 const inDecade = (year, dec) => {
   const y = +String(year || '').slice(0, 4);
@@ -52,6 +54,47 @@ function filterFilms(list) {
   return out;
 }
 
+async function loadMoreVidea(query, stale) {
+  if (videaLoadingMore) return;
+  const button = $('#videaMore'), grid = $('#videaGrid'), status = $('#videaMoreStatus');
+  if (!button || !grid) return;
+  videaLoadingMore = true;
+  button.disabled = true;
+  button.textContent = 'Betöltés…';
+  try {
+    const nextPage = videaCurrentPage + 1;
+    const response = await searchVideaVideos(query, nextPage);
+    if (stale()) return;
+    const videos = Array.isArray(response?.videos) ? response.videos : [];
+    const existing = new Set([...grid.querySelectorAll('[data-videa]')].map(el => el.dataset.videa));
+    const fresh = videos.filter(item => item?.vcode && !existing.has(item.vcode));
+    if (!fresh.length) {
+      if (status) status.textContent = videos.length
+        ? 'A Videa ismételte az előző oldal videóit; további különálló találatot nem adott.'
+        : 'A Videa nem adott több videót ezen az oldalon.';
+      button.remove();
+      return;
+    }
+    const html = fresh.map(item => `<button class="card" data-videa="${esc(item.vcode)}" aria-label="${esc(item.title || 'Videa-videó')}">
+      ${item.thumbnail ? `<img class="poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
+      <span class="name">${esc(item.title || 'Névtelen videó')}</span>
+      <span class="meta">${esc([item.duration, item.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('');
+    grid.insertAdjacentHTML('beforeend', html);
+    videaCurrentPage = nextPage;
+    const shown = grid.querySelectorAll('[data-videa]').length;
+    const total = Number(response?.totalhits || $('#videaCount')?.textContent.match(/\\d+/)?.[0] || 0);
+    const count = $('#videaCount');
+    if (count) count.textContent = `${total || 'Több'} találat · ${shown} betöltve`;
+    if (status) status.textContent = `${shown} / ${total || 'ismeretlen számú'} videó betöltve`;
+    if ((total && shown >= total) || fresh.length < videos.length) button.remove();
+    else { button.disabled = false; button.textContent = 'További találatok betöltése'; }
+  } catch (error) {
+    if (status) status.textContent = `Nem sikerült betölteni: ${error?.message || error}`;
+    button.disabled = false;
+    button.textContent = 'Újrapróbálás';
+  } finally { videaLoadingMore = false; }
+}
+
 async function runSearch(alive) {
   const box = $('#results'); if (!box) return;
   const query = searchQ.trim(), kind = searchKind;
@@ -63,11 +106,15 @@ async function runSearch(alive) {
       const response = await searchVideaVideos(query, 1);
       if (stale()) return;
       const videos = response?.videos || [];
-      box.innerHTML = videos.length ? `<div class="sec-head"><h2>Videa-találatok</h2><span class="count">${Number(response.totalhits || videos.length)} találat</span></div>
-        <div class="grid">${videos.map(v => `<button class="card" data-videa="${esc(v.vcode)}" aria-label="${esc(v.title || 'Videa-videó')}">
-          ${v.thumbnail ? `<img class="poster" src="${esc(v.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
-          <span class="name">${esc(v.title || 'Névtelen videó')}</span>
-          <span class="meta">${esc([v.duration, v.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
+      videaCurrentPage = 1;
+      const total = Number(response?.totalhits || videos.length);
+      const cards = list => list.map(item => `<button class="card" data-videa="${esc(item.vcode)}" aria-label="${esc(item.title || 'Videa-videó')}">
+          ${item.thumbnail ? `<img class="poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
+          <span class="name">${esc(item.title || 'Névtelen videó')}</span>
+          <span class="meta">${esc([item.duration, item.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('');
+      box.innerHTML = videos.length ? `<div class="sec-head"><h2>Videa-találatok</h2><span class="count" id="videaCount">${total} találat · ${videos.length} betöltve</span></div>
+        <div class="grid" id="videaGrid">${cards(videos)}</div>
+        ${videos.length < total ? `<div class="more-wrap" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px"><button class="btn ghost" id="videaMore">További találatok betöltése</button><p class="note" id="videaMoreStatus">10 / ${total} videó betöltve</p></div>` : ''}`
         : (() => {
           const d = response?._popcornDiagnostics;
           const line = (name, item) => `<div class="note"><strong>${name}:</strong> ${esc(item?.status || 'ismeretlen')} · találat: ${item?.count == null ? 'nem értelmezhető' : item.count}${item?.error ? `<br>Hiba: ${esc(item.error)}` : ''}${item?.response ? `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto">${esc(item.response)}</pre>` : ''}</div>`;
@@ -75,6 +122,8 @@ async function runSearch(alive) {
             ${d ? `${line('Általános keresés', d.general)}${line('Címkekeresés', d.tag)}` : '<p class="note">Nem érkezett diagnosztikai adat.</p>'}
             <p class="note">A diagnosztika nem jeleníti meg az API-kulcsot. A nyers válasz rövidített változata segít megállapítani, hogy a Videa melyik keresési módszere ad üres eredményt.</p></div>`;
         })();
+      const moreButton = $('#videaMore');
+      if (moreButton) moreButton.addEventListener('click', () => loadMoreVidea(query, stale));
     } catch (err) {
       if (!stale()) box.innerHTML = `<div class="empty"><h3>Nem sikerült a Videa-keresés</h3><p>${esc(err?.message || 'Ellenőrizd az OpenAPI-kulcsot és a webhelyengedélyt a Beállításokban.')}</p><p class="note">Fontos: a kereséshez az OpenAPI-kulcs kell. A PlayerAPI-kulcs csak a beágyazott lejátszó vezérlésére szolgál.</p></div>`;
     }
