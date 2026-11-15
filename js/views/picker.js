@@ -361,7 +361,7 @@ document.addEventListener('click', e => {
   if (videaTarget) { e.preventDefault(); e.stopPropagation(); playVidea(videaTarget.dataset.pickVidea); return; }
   const t = e.target.closest?.('[data-pkind],[data-pmode],[data-pspin],[data-pswipe],[data-pduel],[data-presults],[data-prestart],[data-picker]');
   if (!t) return;
-  if (t.hasAttribute('data-picker')) { if (history.state?.picker) return; openPicker(); return; }
+  if (t.hasAttribute('data-picker')) { if (!$('#sheet').hidden) return; openPicker(true); return; }
   if (t.dataset.pkind) { PICK.kind = t.dataset.pkind; renderPicker(); return; }
   if (t.dataset.pmode) { PICK.mode = t.dataset.pmode; renderPicker(); return; }
   if (t.hasAttribute('data-pspin')) { startSpin(); return; }

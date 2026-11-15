@@ -810,3 +810,7 @@ img,video,iframe{max-width:100%}
   .tabbar .tab span:not(.badge){font-size:9px}
   .tabbar .tab svg{width:19px;height:19px}
 }
+
+/* Picker sheet: use a close X, not the back chevron, in the top-right corner. */
+.sheet:has(.sheet-body.picker) .sheet-bar .ico-back{display:none}
+.sheet:has(.sheet-body.picker) .sheet-bar .ico-x{display:inline}

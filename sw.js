@@ -1,9 +1,9 @@
 // Popcorn service worker: keeps the app shell available offline and,
 // where the browser supports Periodic Background Sync, checks followed series for new episodes.
 // Series data is cached by the page itself (localStorage), so API calls pass straight through.
-const CACHE = 'popcorn-v26';
+const CACHE = 'popcorn-v28';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
-  'css/app.css?v=26', 'js/core.js?v=26', 'js/i18n.js?v=26', 'js/storage.js?v=26', 'js/theme.js?v=26', 'js/services.js?v=26', 'js/api.js?v=26', 'js/helpers.js?v=26', 'js/filters.js?v=26', 'js/views/shell.js?v=26', 'js/views/home.js?v=26', 'js/views/search.js?v=26', 'js/views/upcoming.js?v=26', 'js/trailers.js?v=26', 'js/providers.js?v=26', 'js/films.js?v=26', 'js/localize.js?v=26', 'js/views/movie.js?v=26', 'js/views/watch.js?v=26', 'js/views/library.js?v=26', 'js/views/stats.js?v=26', 'js/views/picker.js?v=26', 'js/favs.js?v=26', 'js/views/detail.js?v=26', 'js/views/settings.js?v=26', 'js/videa.js?v=26', 'js/backup.js?v=26', 'js/firebase-config.js?v=26', 'js/account.js?v=26', 'js/events.js?v=26', 'js/main.js?v=26'];
+  'css/app.css?v=28', 'js/core.js?v=28', 'js/i18n.js?v=28', 'js/storage.js?v=28', 'js/theme.js?v=28', 'js/services.js?v=28', 'js/api.js?v=28', 'js/helpers.js?v=28', 'js/filters.js?v=28', 'js/views/shell.js?v=28', 'js/views/home.js?v=28', 'js/views/search.js?v=28', 'js/views/upcoming.js?v=28', 'js/trailers.js?v=28', 'js/providers.js?v=28', 'js/films.js?v=28', 'js/localize.js?v=28', 'js/views/movie.js?v=28', 'js/views/watch.js?v=28', 'js/views/library.js?v=28', 'js/views/stats.js?v=28', 'js/views/picker.js?v=28', 'js/favs.js?v=28', 'js/views/detail.js?v=28', 'js/views/settings.js?v=28', 'js/videa.js?v=28', 'js/backup.js?v=28', 'js/firebase-config.js?v=28', 'js/account.js?v=28', 'js/events.js?v=28', 'js/main.js?v=28'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
