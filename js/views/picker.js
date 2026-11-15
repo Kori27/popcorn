@@ -111,9 +111,13 @@ function placeStrip(s, animate) {
   const strip = $('#spinStrip'), wrap = strip?.parentElement;
   if (!strip) return;
   const x = -(WIN_AT * (TILE + GAP) + TILE / 2 + s.offset - wrap.clientWidth / 2);
-  strip.style.transition = animate ? `transform ${matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.6 : 5.6}s cubic-bezier(.06,.72,.1,1)` : 'none';
+  // jump back to the start without animating, then run the spin from there
+  strip.style.transition = 'none';
   strip.style.transform = `translateX(${animate ? 0 : x}px)`;
-  if (animate) { strip.getBoundingClientRect(); strip.style.transform = `translateX(${x}px)`; }
+  if (!animate) return;
+  strip.getBoundingClientRect();
+  strip.style.transition = `transform ${matchMedia('(prefers-reduced-motion:reduce)').matches ? 0.6 : 5.6}s cubic-bezier(.06,.72,.1,1)`;
+  strip.style.transform = `translateX(${x}px)`;
 }
 async function startSpin() {
   const pool = await pickPool(PICK.kind);
@@ -125,7 +129,9 @@ async function startSpin() {
   strip[WIN_AT] = (cands.length ? cands : pool)[Math.floor(Math.random() * (cands.length || pool.length))];
   const s = PICK.spin = { kind: PICK.kind, strip, win: strip[WIN_AT], offset: (Math.random() - 0.5) * TILE * 0.7, running: true, done: false };
   ensureImage(s.win).then(img => { if (img) new Image().src = img; });   // load the winner's poster before the strip stops
-  $('#spinStrip').innerHTML = strip.map(spinTile).join('');
+  const el = $('#spinStrip');
+  el.style.transition = 'none'; el.style.transform = 'translateX(0px)';
+  el.innerHTML = strip.map(spinTile).join('');
   $('#spinResult').innerHTML = '';
   const btn = $('[data-pspin]'); if (btn) btn.disabled = true;
   placeStrip(s, true);
@@ -138,7 +144,9 @@ async function startSpin() {
     $('#spinResult').innerHTML = spinResult(s.win);
     const b = $('[data-pspin]'); if (b) { b.disabled = false; b.textContent = tr('Újra pörgetés'); }
   };
-  $('#spinStrip').addEventListener('transitionend', finish, { once: true });
+  // only the strip's own transform transition counts (tiles have hover transitions that bubble up)
+  const onEnd = e => { if (e.target !== el || e.propertyName !== 'transform') return; el.removeEventListener('transitionend', onEnd); finish(); };
+  el.addEventListener('transitionend', onEnd);
   setTimeout(finish, 6200);   // in case the transition event never fires (e.g. hidden tab)
 }
 function spinResult(it) {
@@ -246,11 +254,11 @@ function resultsHtml(pool, weights, seen, chosen, mode) {
   const recs = recommend(pool, weights, seen, 6), top = likedGenres(weights);
   const map = pickName({ kind: PICK.kind });
   return `<div class="pick-results">
-    <h3>${tr('Neked ajánljuk')}</h3>
+    <div class="pick-results-head"><h3>${tr('Neked ajánljuk')}</h3><button class="btn primary" data-prestart>${tr('Új kör')}</button></div>
     ${top.length ? `<p class="note">${tr('Ezek alapján: {g}', { g: top.map(map).join(', ') })}</p>` : `<p class="note">${tr('Még nem kedveltél semmit, ezért vegyes válogatás jön.')}</p>`}
     <div class="grid">${recs.map(it => itemCard(it)).join('')}</div>
     ${chosen.length ? `<h3>${tr(mode === 'duel' ? 'A választásaid' : 'Ezek tetszettek')}</h3><div class="grid">${chosen.map(it => itemCard(it)).join('')}</div>` : ''}
-    <div style="display:flex;justify-content:center"><button class="btn primary" data-prestart>${tr('Új kör')}</button></div></div>`;
+    </div>`;
 }
 
 /* ---------- events ---------- */

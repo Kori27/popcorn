@@ -650,6 +650,8 @@ img,video,iframe{max-width:100%}
 .vs{font:800 18px/1 var(--font-display);color:var(--accent)}
 .pick-results{display:flex;flex-direction:column;gap:12px}
 .pick-results h3{margin:6px 0 0;font:700 19px/1.2 var(--font-display)}
+.pick-results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pick-results-head h3{margin:0}
 .pick-card .pw{position:relative;display:block}
 .pick-card .pw img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:12px}
 .pick-card.r-legend .pw{box-shadow:0 0 0 2px var(--r-legend);border-radius:12px}
