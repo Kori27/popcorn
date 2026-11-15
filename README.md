@@ -24,7 +24,7 @@ Az app három nyelven (magyar, angol, német) használható, és testre szabhat�
 | Fül / rész | Mit tud |
 |---|---|
 | **Kezdőlap** | „Folytasd” lista a következő meg nem nézett résszel és egy koppintásos „megnézve” gombbal; „Hamarosan” (követett sorozatok részei 14 napra); ajánlások a kiválasztott szolgáltatóidon; népszerű sorozatok. „ÚJ” jelölés az utolsó látogatás óta megjelent részeken. |
-| **Nézd most** | Három rész. *Ingyen, legálisan*: új és népszerű filmek, sorozatok, amelyek Magyarországon most ingyen (néhol reklámmal) nézhetők a szolgáltatójuknál; szűrők: típus, műfaj, megjelenés éve, reklám, rendezés (TMDB-kulccsal). *Modern, szabad*: ellenőrzött listából modern, színes, Creative Commons licencű filmek az appon belüli lejátszóval. *Klasszikusok*: kb. 3 800 közkincs film; szűrők: műfaj, nyelv, évtized, rendezés, plusz keresés. Ingyenes magyar források linkjei. |
+| **Nézd most** | Három rész. *Most nézhető*: valódi, új és népszerű filmek és sorozatok, amelyek Magyarországon most legálisan nézhetők (ingyen, reklámmal vagy az előfizetéseiden), kiemelt filmmel a lista tetején; szűrők: típus, műfaj, megjelenés éve, hogyan (ingyen / reklám nélkül / reklámmal / az előfizetéseimen), nyelv (magyar szolgáltatónál, szinkronnal / magyar film), rendezés (TMDB-kulccsal). *Modern, szabad*: ellenőrzött listából modern, színes, Creative Commons licencű filmek az appon belüli lejátszóval. *Klasszikusok*: kb. 3 800 közkincs film; szűrők: műfaj, nyelv, évtized, rendezés, plusz keresés. Ingyenes magyar források linkjei. |
 | **Érkezik** | Követett sorozatok következő részei napokra bontva; új sorozatok és évadok premierjei 7 napra (szűrők: hol – streaming / amerikai TV / magyar TV / az előfizetéseim –, műfaj); magyarországi mozibemutatók (TMDB; szűrők: műfaj, rendezés); a mai streaming- és magyar tévéműsor. |
 | **Keresés** | *Sorozatok*: élő keresés a TVmaze adatbázisában (szűrők: állapot, indulás éve, az előfizetéseim, rendezés). *Filmek*: keresés kulcs nélkül, a Wikipédiából és a Wikidatából, magyar vagy eredeti címmel (szűrők: megjelenés éve, rendezés). |
 | **Listám** | *Sorozataim*: csoportosítva, haladásjelzővel; szűrők: állapot, az előfizetéseim, rendezés. *Filmjeim*: megnézendő és megnézett filmek, egy koppintással átjelölhetők; szűrés arra, ami az előfizetéseiden elérhető (TMDB-kulccsal). *Értékeléseim*: 1–5 csillagos rangsor; szűrők: típus, legalább hány csillag, rendezés. *Statisztika*: megnézett részek és filmek, nézési idő, végignézett sorozatok, átlagos értékelés, havi nézési idő oszlopdiagramon (táblázatként is), kedvenc műfajok, legtöbbet nézett sorozatok. |
@@ -36,6 +36,7 @@ További jellemzők:
 - **Telepíthető** a kezdőképernyőre (Android és iOS), saját ikonnal, teljes képernyőn fut.
 - **Offline is indul**: az app váza a Service Worker gyorsítótárából töltődik, a már letöltött adatok elérhetők; internet nélkül figyelmeztető sáv jelenik meg.
 - **Reszponzív**: telefonon alsó menüsáv és teljes képernyős adatlap, 900 px-nél szélesebb kijelzőn (tablet) kétoszlopos elrendezés.
+- **Megjelenés:** lágy kiemelőszínű háttérderengés, színes aktív fülválasztók, poszterek értékelés-jelvénnyel és finom mozgással, elmosott borító- vagy jelenetkép az adatlapok tetején.
 - **Szűrők** minden listán: kompakt legördülő választók, az aktív szűrő kiemelve, „Alaphelyzet” gombbal; a beállított szűrőket az app megjegyzi.
 - **Értesítések**: a háttérben futó ellenőrzés (Periodic Background Sync) új részt jelez a követett sorozatokból, ahol a platform támogatja.
 
@@ -127,7 +128,8 @@ Kulcs nélkül minden más működik, a filmkeresés és -követés is. Ilyenkor
 ## 5. Ismert hibák és korlátok
 
 - **Szolgáltatók kulcs nélkül:** TMDB-kulcs nélkül az app az eredeti csatorna alapján becsüli, melyik szolgáltatónál fut egy sorozat (pl. HBO → HBO Max); ez Magyarországon nem mindig pontos. Kulccsal a pontos lista jelenik meg.
-- **Ingyen nézhető címek:** a friss filmek és sorozatok a szolgáltató saját oldalán vagy appjában indulnak; az appon belül csak a közkincs és a szabad licencű filmek játszhatók le.
+- **Most nézhető címek:** a friss filmek és sorozatok a szolgáltató saját oldalán vagy appjában indulnak; az appon belül csak a közkincs és a szabad licencű filmek játszhatók le.
+- **Magyar szinkron:** egyik nyilvános adatbázis sem tárolja, van-e egy címnek magyar szinkronja. A „magyar szolgáltatónál (szinkronnal)” szűrő az RTL+, TV2 Play, Médiaklikk és Filmio kínálatára szűr, amely szinte mindig magyar hangú; ez közelítés, nem garancia.
 - **Filmkeresés:** a Wikipédia keresőjére épül, ezért a nagyon rövid vagy gyakori szavakból álló címeknél a találat nem mindig az első helyen van; a megjelenési év a Wikidata legkorábbi dátuma (fesztiválbemutató is lehet).
 - **RTL+ és TV2 Play keresés:** ezek az oldalak nem fogadják el a keresőszót linkben, ezért csak a keresőjük nyílik meg, a címet be kell gépelni.
 - **Háttér-értesítések:** csak Androidon, Chrome-ban, telepített appal működnek, és a rendszer dönti el, milyen gyakran fut az ellenőrzés (általában naponta). iOS-en és más böngészőkben az új részeket az app megnyitásakor jelzi („ÚJ” jelölés és üzenet).
@@ -152,7 +154,7 @@ Kulcs nélkül minden más működik, a filmkeresés és -követés is. Ilyenkor
 2. **Keresés:** sorozat keresése, adatlap megnyitása, *Listára teszem*.
 3. **Haladás követése:** néhány rész kipipálása, *Egész évad megnézve*; a Kezdőlapon megjelenik a „Folytasd” sor a következő résszel.
 4. **Értékelés:** csillagok az adatlapon → *Listám → Értékeléseim* rangsor.
-5. **Nézd most:** *Ingyen, legálisan* szűrőkkel (pl. sorozatok, 2020 után), egy cím szolgáltatója; *Modern, szabad* film elindítása az appon belül.
+5. **Nézd most:** *Most nézhető* szűrőkkel (pl. Nyelv: magyar szolgáltatónál), egy cím szolgáltatója; *Modern, szabad* film elindítása az appon belül.
 6. **Filmek:** Keresés → Filmek → „Dűne” → *Megnézendő*, majd *Listám → Filmjeim* és *Statisztika*.
 7. **Érkezik:** premierek és mozibemutatók, egy előzetes lejátszása.
 8. **Beállítások:** nyelvváltás angolra vagy németre, sötét mód, kiemelőszín, OLED: azonnal látszik a változás.

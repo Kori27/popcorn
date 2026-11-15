@@ -96,7 +96,7 @@ function renderSheetInner() {
   const facts = [statusPill(s.status), s.rating ? `<span class="pill neutral">★ ${s.rating.toFixed(1)}</span>` : '', s.runtime ? `<span class="pill neutral">${s.runtime} perc</span>` : '', ...s.genres.slice(0, 3).map(g => `<span class="pill neutral">${esc(g)}</span>`)].join('');
   const years = s.premiered ? (s.ended ? `${s.premiered.slice(0, 4)}–${s.ended.slice(0, 4)}` : `${s.premiered.slice(0, 4)}–`) : '';
   const nextLine = p.next ? `${tr('Következő')}: <span class="code">${code(p.next)}</span> · ${esc(p.next.name)}` : p.upcoming ? `${tr('Új rész')}: <span class="code">${code(p.upcoming)}</span> · ${fmtDate(p.upcoming.date)}` : '';
-  $('#sheet').innerHTML = `<div class="sheet-bar">${closeBtnHtml()}
+  $('#sheet').innerHTML = `${backdrop(s.img)}<div class="sheet-bar">${closeBtnHtml()}
       ${s.url ? `<a class="iconbtn" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a TVmaze-en')}">${ICON.ext}</a>` : ''}</div>
     <div class="sheet-body">
       <div class="hero">${posterImg(s)}<div style="min-width:0">

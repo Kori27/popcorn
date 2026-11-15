@@ -13,7 +13,7 @@ async function openMovie(id, push = true) {
     const t = pickTrailer(m.videos?.results);
     const facts = [m.release_date ? `<span class="pill accent">${tr('Bemutató')}: ${fmtDate(m.release_date)}</span>` : '', m.runtime ? `<span class="pill neutral">${tr('{n} perc', { n: m.runtime })}</span>` : '',
       m.vote_count > 20 ? `<span class="pill neutral">★ ${m.vote_average.toFixed(1)}</span>` : '', ...(m.genres || []).slice(0, 3).map(g => `<span class="pill neutral">${esc(g.name)}</span>`)].join('');
-    sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}</div><div class="sheet-body">
+    sh.innerHTML = `${m.backdrop_path ? backdrop(TIMG + 'w780' + m.backdrop_path, true) : backdrop(m.poster_path ? TIMG + 'w342' + m.poster_path : null)}<div class="sheet-bar">${closeBtnHtml()}</div><div class="sheet-body">
       <div class="hero">${m.poster_path ? `<img class="poster" src="${TIMG}w342${esc(m.poster_path)}" alt="">` : `<div class="poster-ph">${esc(m.title)}</div>`}
         <div style="min-width:0"><h2>${esc(m.title)}</h2>${m.original_title !== m.title ? `<div class="note">${esc(m.original_title)}</div>` : ''}<div class="facts">${facts}</div>
         ${movieActions('mv:' + id, { kind: 'mv', ref: id, title: m.title, img: m.poster_path ? TIMG + 'w154' + m.poster_path : null, year: (m.release_date || '').slice(0, 4), runtime: m.runtime || null, imdb: m.imdb_id || null })}</div></div>

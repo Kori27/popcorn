@@ -28,6 +28,8 @@ const showCard = (s, extra = '') => {
   ${posterImg(s)}${state.follows[s.id] ? `<span class="flag" title="${tr('A listádon')}">${ICON.check}</span>` : ''}
   <span class="name">${esc(s.name)}</span>${extra}${extra && !sv ? '' : meta}</button>`;
 };
+/** Soft image behind the top of a detail page: a wide scene image, or a blurred poster. */
+const backdrop = (url, wide = false) => url ? `<div class="backdrop${wide ? ' wide' : ''}" style="background-image:url('${esc(url)}')" aria-hidden="true"></div>` : '';
 const errorBox = msg => `<div class="error">${esc(tr(msg))}</div>`;
 const NET_ERR = 'Nem sikerült elérni a sorozat-adatbázist. Ellenőrizd az internetkapcsolatot, és próbáld újra.';
 

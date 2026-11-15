@@ -279,3 +279,60 @@ table.data{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;fon
 table.data th,table.data td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
 table.data th:first-child,table.data td:first-child{text-align:left}
 table.data th{color:var(--muted);font-weight:600}
+
+/* ---------- visual polish ---------- */
+body{background-image:radial-gradient(120% 60% at 50% -10%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%);background-attachment:fixed;background-repeat:no-repeat}
+.top{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+body::before{background:color-mix(in srgb,var(--bg) 82%,transparent)}
+.top h1{background:linear-gradient(90deg,var(--fg) 55%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-head h2{display:flex;align-items:center;gap:8px}
+.sec-head h2::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--accent)}
+
+/* segmented tabs: coloured active pill */
+.seg button{border:0;background:var(--surface);box-shadow:var(--shadow);padding:8px 15px;transition:background .15s,color .15s,transform .1s}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);box-shadow:0 6px 16px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.seg button:active{transform:scale(.96)}
+
+/* buttons */
+.btn{transition:transform .1s,filter .15s,box-shadow .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#a855f7));box-shadow:0 8px 20px -10px color-mix(in srgb,var(--accent) 80%,transparent)}
+.btn.primary:hover{filter:brightness(1.08)}
+
+/* cards & posters */
+.pw{position:relative;display:block}
+.poster,.poster-ph{border-radius:12px;box-shadow:0 10px 22px -14px rgba(10,12,25,.55)}
+.card .poster,.card .poster-ph{transition:transform .2s ease,box-shadow .2s ease}
+.card:hover .poster,.card:hover .poster-ph,.card:focus-visible .poster{transform:translateY(-3px);box-shadow:0 16px 28px -14px rgba(10,12,25,.6)}
+.card:active .poster{transform:scale(.97)}
+.score{position:absolute;left:6px;bottom:6px;background:rgba(10,12,22,.78);color:#FFD66B;font-size:11.5px;font-weight:700;padding:3px 7px;border-radius:8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-variant-numeric:tabular-nums}
+.poster-ph{background:linear-gradient(160deg,var(--accent-soft),var(--surface-2))}
+
+/* panels, lists, empties: hairline edge so they read in dark mode too */
+.panel,.list,.empty,.tiles>div,.stat div{border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.empty{background:linear-gradient(160deg,var(--surface),color-mix(in srgb,var(--accent-soft) 45%,var(--surface)))}
+.row{transition:background .15s}
+.row[data-open]:hover,.row[data-movie]:hover,.row[data-wfilm]:hover,.row[data-film]:hover{background:color-mix(in srgb,var(--accent-soft) 40%,transparent)}
+
+/* featured banner */
+.feature{position:relative;display:flex;align-items:flex-end;width:100%;aspect-ratio:16/9;max-height:320px;border:0;padding:0;border-radius:18px;overflow:hidden;
+  background:#111 center/cover no-repeat;cursor:pointer;text-align:left;color:#fff;box-shadow:0 18px 36px -18px rgba(10,12,25,.7);margin-bottom:4px}
+.feature::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.82))}
+.feature-text{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;padding:16px 16px 14px;min-width:0}
+.feature b{font:800 22px/1.15 var(--font-display);text-wrap:balance}
+.kicker{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--accent-fg);padding:3px 8px;border-radius:6px;margin-bottom:4px}
+.feature-meta{font-size:13px;opacity:.9}
+.feature-desc{font-size:13px;opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:60ch}
+.feature:hover{filter:brightness(1.05)}
+
+/* detail page backdrop */
+.sheet-bar{background:transparent}
+.sheet-body{position:relative;z-index:1}
+.backdrop{position:absolute;top:0;left:0;right:0;height:340px;background:center 20%/cover no-repeat;z-index:0;pointer-events:none;
+  filter:blur(28px) saturate(1.3);opacity:.55;transform:scale(1.15);
+  -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent);mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.backdrop.wide{filter:saturate(1.1);opacity:.45;transform:none;height:300px}
+.hero .poster,.hero .poster-ph{box-shadow:0 18px 36px -16px rgba(0,0,0,.7)}
+.tab svg{transition:transform .15s}
+.tab[aria-current="page"] svg{transform:translateY(-1px) scale(1.06)}
+#wbody,#cal,.stats{display:flex;flex-direction:column;gap:14px}

@@ -105,7 +105,7 @@ async function openWikiFilm(qid, push = true) {
   const key = 'wd:' + qid, title = pickLang(f.labels), orig = f.labels.en && f.labels.en !== title ? f.labels.en : '';
   const meta = { kind: 'wd', ref: qid, title, img: f.img, year: f.year, runtime: f.runtime, imdb: f.imdb };
   const wikiUrl = f.page ? `https://${f.wiki}.m.wikipedia.org/wiki/${encodeURIComponent(f.page.replace(/ /g, '_'))}` : null;
-  sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}${wikiUrl ? `<a class="iconbtn" href="${esc(wikiUrl)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a Wikipédián')}">${ICON.ext}</a>` : ''}</div>
+  sh.innerHTML = `${backdrop(f.img)}<div class="sheet-bar">${closeBtnHtml()}${wikiUrl ? `<a class="iconbtn" href="${esc(wikiUrl)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a Wikipédián')}">${ICON.ext}</a>` : ''}</div>
     <div class="sheet-body">
       <div class="hero">${f.img ? `<img class="poster" src="${esc(f.img)}" alt="">` : `<div class="poster-ph">${esc(title)}</div>`}
         <div style="min-width:0"><h2>${esc(title)}</h2>${orig ? `<div class="note">${esc(orig)}</div>` : ''}

@@ -201,7 +201,17 @@ const I18N_ROWS = [
   ['Ez nem Sorozatnapló-mentés.', 'This is not a Sorozatnapló backup.', 'Das ist keine Sorozatnapló-Sicherung.'],
   ['Visszaállítod a {date} napon készült mentést?\n{a} sorozat, {b} film, {c} értékelés.\nA mostani adataid helyére kerül.', 'Restore the backup from {date}?\n{a} series, {b} films, {c} ratings.\nIt replaces your current data.', 'Sicherung vom {date} wiederherstellen?\n{a} Serien, {b} Filme, {c} Bewertungen.\nSie ersetzt deine aktuellen Daten.'],
   ['Visszaállítva: {n} sorozat', 'Restored: {n} series', 'Wiederhergestellt: {n} Serien'],
-  ['Sorozatadatok: TVmaze. Filmadatok: Wikipédia, Wikidata és (kulccsal) TMDB.', 'Series data: TVmaze. Film data: Wikipedia, Wikidata and (with a key) TMDB.', 'Seriendaten: TVmaze. Filmdaten: Wikipedia, Wikidata und (mit Schlüssel) TMDB.']
+  ['Sorozatadatok: TVmaze. Filmadatok: Wikipédia, Wikidata és (kulccsal) TMDB.', 'Series data: TVmaze. Film data: Wikipedia, Wikidata and (with a key) TMDB.', 'Seriendaten: TVmaze. Filmdaten: Wikipedia, Wikidata und (mit Schlüssel) TMDB.'],
+  ['Most nézhető', 'Available now', 'Jetzt verfügbar'], ['Kiemelt', 'Featured', 'Empfohlen'], ['Hogyan', 'How', 'Wie'], ['Ingyen, reklám nélkül', 'Free, no ads', 'Gratis, ohne Werbung'], ['Ingyen, reklámmal', 'Free with ads', 'Gratis mit Werbung'],
+  ['Magyar szolgáltatónál (szinkronnal)', 'Hungarian service (dubbed)', 'Ungarischer Anbieter (synchronisiert)'], ['Magyar film', 'Hungarian film', 'Ungarischer Film'],
+  ['Valódi, új és népszerű filmek és sorozatok, amelyek Magyarországon most legálisan nézhetők: ingyen, reklámmal vagy az előfizetéseiden. Koppints egy címre: előzetes, és hogy melyik szolgáltatónál indíthatod.',
+    'Real, new and popular films and series you can watch legally in Hungary right now: free, with ads or on your subscriptions. Tap a title for the trailer and the service where it plays.',
+    'Echte, neue und beliebte Filme und Serien, die in Ungarn gerade legal laufen: gratis, mit Werbung oder in deinen Abos. Tippe auf einen Titel für Trailer und Anbieter.'],
+  ['Magyar hang: az RTL+, a TV2 Play, a Médiaklikk és a Filmio szinte mindent magyarul ad. Szinkron-adatot egyik nyilvános adatbázis sem tárol, ezért ez jó közelítés, nem garancia.',
+    'Hungarian audio: RTL+, TV2 Play, Médiaklikk and Filmio show almost everything in Hungarian. No public database records dubbing, so this is a good approximation, not a guarantee.',
+    'Ungarischer Ton: RTL+, TV2 Play, Médiaklikk und Filmio zeigen fast alles auf Ungarisch. Keine öffentliche Datenbank erfasst Synchronfassungen, daher ist das eine gute Näherung, keine Garantie.'],
+  ['Ezekkel a szűrőkkel most nincs nézhető cím. Lazíts a szűrőkön.', 'Nothing matches these filters right now. Try loosening them.', 'Mit diesen Filtern gibt es gerade nichts. Lockere die Filter.'],
+  ['Magyar nyelvű közkincs film alig van az archívumban. Nézd meg a „Most nézhető” fület vagy a lenti magyar forrásokat.', 'There are hardly any public-domain films in Hungarian. Try the “Available now” tab or the Hungarian sources below.', 'Gemeinfreie Filme auf Ungarisch gibt es kaum. Schau unter „Jetzt verfügbar“ oder bei den ungarischen Quellen.']
 ];
 const I18N = { en: {}, de: {} };
 I18N_ROWS.forEach(([hu, en, de]) => { I18N.en[hu] = en; I18N.de[hu] = de; });

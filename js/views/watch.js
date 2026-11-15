@@ -6,7 +6,7 @@
 
 const IA = 'https://archive.org';
 const iaThumb = id => `${IA}/services/img/${encodeURIComponent(id)}`;
-const WATCH_SEGS = [['free', 'Ingyen, legálisan'], ['open', 'Modern, szabad'], ['classic', 'Klasszikusok']];
+const WATCH_SEGS = [['free', 'Most nézhető'], ['open', 'Modern, szabad'], ['classic', 'Klasszikusok']];
 let watchSeg = null, iaQ = '', iaPage = 1, freePage = 1;
 
 /* ---------- classic public-domain films ---------- */
@@ -41,12 +41,31 @@ const OPEN_FILMS = [
 /* ---------- free right now in Hungary (TMDB discover with watch_region=HU) ---------- */
 const FREE_YEARS = [['', 'Bármikor'], ['2020', '2020 után'], ['2010', '2010 után'], ['2000', '2000 után'], ['old', '2000 előtt']];
 const FREE_SORTS = [['popular', 'Népszerűség'], ['rated', 'Legjobbra értékelt'], ['newest', 'Legújabb']];
-const FREE_MONEY = [['free|ads', 'Mind'], ['free', 'Reklám nélkül'], ['ads', 'Reklámmal']];
+const HOW_OPTIONS = () => [['free|ads', 'Ingyen'], ['free', 'Ingyen, reklám nélkül'], ['ads', 'Ingyen, reklámmal'], ...(state.services.length ? [['mine', 'Az előfizetéseimen']] : [])];
+const LANG_OPTIONS = [['', 'Mind'], ['hudub', 'Magyar szolgáltatónál (szinkronnal)'], ['hu', 'Magyar film']];
+// Hungarian services that (almost always) offer Hungarian audio
+const HU_LOCAL = /^rtl|tv2|tv 2|m[ée]diaklikk|mtva|filmio|nemzeti film/i;
 const tmdbGenres = type => tmdb(`/genre/${type}/list?language=${TLANG()}`, 30 * DAY).then(d => d.genres || []).catch(() => []);
-function freeDiscoverPath(page) {
+const huProviders = type => tmdb(`/watch/providers/${type}?watch_region=HU&language=${TLANG()}`, 7 * DAY).then(d => d.results || []).catch(() => []);
+/** Returns the discover path, or null when the chosen filters can match nothing. */
+async function freeDiscoverPath(page) {
   const type = fget('freeType', 'movie'), movie = type === 'movie', dateKey = movie ? 'primary_release_date' : 'first_air_date';
   const y = fget('freeYear', ''), sort = fget('freeSort', 'popular'), genre = fget('freeGenre', '');
-  let q = `/discover/${type}?language=${TLANG()}&watch_region=HU&with_watch_monetization_types=${encodeURIComponent(fget('freeMoney', 'free|ads'))}&include_adult=false&page=${page}`;
+  let how = fget('freeHow', 'free|ads');
+  if (how === 'mine' && !state.services.length) how = 'free|ads';
+  const lang = fget('freeLang', '');
+  let providers = null;
+  if (how === 'mine' || lang === 'hudub') {
+    let list = await huProviders(type);
+    if (how === 'mine') list = list.filter(p => { const k = providerService(p); return k && state.services.includes(k); });
+    if (lang === 'hudub') list = list.filter(p => HU_LOCAL.test(p.provider_name));
+    if (!list.length) return null;
+    providers = list.map(p => p.provider_id).join('|');
+  }
+  const money = how === 'mine' ? 'flatrate|free|ads' : how;
+  let q = `/discover/${type}?language=${TLANG()}&watch_region=HU&with_watch_monetization_types=${encodeURIComponent(money)}&include_adult=false&page=${page}`;
+  if (providers) q += '&with_watch_providers=' + encodeURIComponent(providers);
+  if (lang === 'hu') q += '&with_original_language=hu';
   q += '&sort_by=' + (sort === 'rated' ? 'vote_average.desc&vote_count.gte=150' : sort === 'newest' ? `${dateKey}.desc&${dateKey}.lte=${today()}` : 'popularity.desc');
   if (genre) q += '&with_genres=' + encodeURIComponent(genre);
   if (y === 'old') q += `&${dateKey}.lte=1999-12-31`; else if (y) q += `&${dateKey}.gte=${y}-01-01`;
@@ -55,9 +74,18 @@ function freeDiscoverPath(page) {
 const tmdbCard = (x, type) => {
   const title = x.title || x.name, date = x.release_date || x.first_air_date || '';
   return `<button class="card" ${type === 'movie' ? `data-movie="${x.id}"` : `data-tmdbtv="${x.id}"`} aria-label="${esc(title)}">
-    ${x.poster_path ? `<img class="poster" src="${TIMG}w342${esc(x.poster_path)}" alt="" loading="lazy">` : `<div class="poster-ph">${esc(title)}</div>`}
+    <span class="pw">${x.poster_path ? `<img class="poster" src="${TIMG}w342${esc(x.poster_path)}" alt="" loading="lazy">` : `<div class="poster-ph">${esc(title)}</div>`}
+    ${x.vote_count > 20 ? `<span class="score">★ ${x.vote_average.toFixed(1)}</span>` : ''}</span>
     ${type === 'movie' && state.movies['mv:' + x.id] ? `<span class="flag">${ICON.check}</span>` : ''}
-    <span class="name">${esc(title)}</span><span class="meta">${esc([date.slice(0, 4), x.vote_count > 20 ? '★ ' + x.vote_average.toFixed(1) : ''].filter(Boolean).join(' · '))}</span></button>`;
+    <span class="name">${esc(title)}</span><span class="meta">${esc(date.slice(0, 4))}</span></button>`;
+};
+/** Big banner for the first result, using TMDB's wide scene image. */
+const featureCard = (x, type) => {
+  const title = x.title || x.name, date = x.release_date || x.first_air_date || '';
+  return `<button class="feature" ${type === 'movie' ? `data-movie="${x.id}"` : `data-tmdbtv="${x.id}"`} aria-label="${esc(title)}" style="background-image:url('${TIMG}w780${esc(x.backdrop_path)}')">
+    <span class="feature-text"><span class="kicker">${tr('Kiemelt')}</span><b>${esc(title)}</b>
+    <span class="feature-meta">${esc([date.slice(0, 4), x.vote_count > 20 ? '★ ' + x.vote_average.toFixed(1) : ''].filter(Boolean).join(' · '))}</span>
+    ${x.overview ? `<span class="feature-desc">${esc(x.overview)}</span>` : ''}</span></button>`;
 };
 
 const FREE_HU = [
@@ -80,7 +108,8 @@ function renderWatch(v, alive) {
 async function renderFree(body, alive) {
   if (!tmdbKey()) { body.innerHTML = noKeyPanel('Friss, ingyen nézhető filmek és sorozatok') + freeHuPanel(); return; }
   const type = fget('freeType', 'movie');
-  body.innerHTML = `<p class="note">${tr('Új és népszerű filmek, sorozatok, amelyek Magyarországon most legálisan, ingyen nézhetők (néhol reklámmal). Koppints egy címre: előzetes, és hogy melyik szolgáltatónál indíthatod.')}</p>
+  body.innerHTML = `<p class="note">${tr('Valódi, új és népszerű filmek és sorozatok, amelyek Magyarországon most legálisan nézhetők: ingyen, reklámmal vagy az előfizetéseiden. Koppints egy címre: előzetes, és hogy melyik szolgáltatónál indíthatod.')}</p>
+    ${fget('freeLang', '') === 'hudub' ? `<p class="note">${tr('Magyar hang: az RTL+, a TV2 Play, a Médiaklikk és a Filmio szinte mindent magyarul ad. Szinkron-adatot egyik nyilvános adatbázis sem tárol, ezért ez jó közelítés, nem garancia.')}</p>` : ''}
     <div id="freeFilters">${filterBar('free', freeFilterItems(type, []))}</div><div id="free">${skelGrid(6)}</div>${freeHuPanel()}`;
   FILTER_HANDLERS.free = () => { freePage = 1; renderFree(body, alive); };
   tmdbGenres(type).then(gs => { if (alive() && $('#freeFilters')) $('#freeFilters').innerHTML = filterBar('free', freeFilterItems(type, gs)); });
@@ -91,20 +120,25 @@ const freeFilterItems = (type, genres) => [
   { id: 'freeType', label: 'Típus', def: 'movie', options: [['movie', 'Filmek'], ['tv', 'Sorozatok']] },
   { id: 'freeGenre', label: 'Műfaj', def: '', options: [['', 'Mind'], ...genres.map(g => [String(g.id), g.name])].concat(fget('freeGenre', '') && !genres.length ? [[fget('freeGenre', ''), '…']] : []) },
   { id: 'freeYear', label: 'Megjelenés éve', def: '', options: FREE_YEARS },
-  { id: 'freeMoney', label: 'Reklám', def: 'free|ads', options: FREE_MONEY },
+  { id: 'freeHow', label: 'Hogyan', def: 'free|ads', options: HOW_OPTIONS() },
+  { id: 'freeLang', label: 'Nyelv', def: '', options: LANG_OPTIONS },
   { id: 'freeSort', label: 'Rendezés', def: 'popular', options: FREE_SORTS }];
 async function loadFree(alive, append) {
   const box = $('#free'); if (!box) return;
-  const type = fget('freeType', 'movie'), path = freeDiscoverPath(freePage);
+  const type = fget('freeType', 'movie');
   try {
-    const d = await tmdb(path, 12 * H);
+    const path = await freeDiscoverPath(freePage);
+    const d = path ? await tmdb(path, 12 * H) : { results: [], page: 1, total_pages: 1 };
     if (!alive() || !$('#free')) return;
     const cards = (d.results || []).map(x => tmdbCard(x, type)).join('');
     const grid = box.querySelector('.grid');
     if (append && grid) grid.insertAdjacentHTML('beforeend', cards);
-    else box.innerHTML = d.results?.length
-      ? `<div class="sec-head"><span class="count">${tr('{n} találat', { n: (d.total_results || 0).toLocaleString(LOC()) })}</span></div><div class="grid">${cards}</div>`
-      : `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr('Ezekkel a szűrőkkel most nincs ingyen nézhető cím. Lazíts a szűrőkön.')}</p></div>`;
+    else if (d.results?.length) {
+      const top = d.results.find(x => x.backdrop_path);
+      box.innerHTML = (top ? featureCard(top, type) : '')
+        + `<div class="sec-head"><span class="count">${tr('{n} találat', { n: (d.total_results || 0).toLocaleString(LOC()) })}</span></div>
+           <div class="grid">${d.results.filter(x => x !== top).map(x => tmdbCard(x, type)).join('')}</div>`;
+    } else box.innerHTML = `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr('Ezekkel a szűrőkkel most nincs nézhető cím. Lazíts a szűrőkön.')}</p></div>`;
     box.querySelector('.more')?.remove();
     if (d.page < Math.min(d.total_pages || 1, 20)) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-freemore style="margin-top:14px">${tr('Továbbiak')}</button>`);
   } catch (e) { if (alive()) box.innerHTML = keyError(e); }
@@ -158,7 +192,7 @@ async function loadIA(alive, append) {
     if (append && grid) grid.insertAdjacentHTML('beforeend', cards);
     else box.innerHTML = res.docs.length
       ? `<div class="sec-head"><span class="count">${tr('{n} találat', { n: res.total.toLocaleString(LOC()) })}</span></div><div class="grid">${cards}</div>`
-      : `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr(fget('iaLang', 'all') === 'hu' ? 'Magyar nyelvű közkincs film alig van az archívumban. Nézd meg az „Ingyen, legálisan” fület vagy a lenti magyar forrásokat.' : 'Próbáld angol címmel, vagy lazíts a szűrőkön.')}</p></div>`;
+      : `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr(fget('iaLang', 'all') === 'hu' ? 'Magyar nyelvű közkincs film alig van az archívumban. Nézd meg a „Most nézhető” fület vagy a lenti magyar forrásokat.' : 'Próbáld angol címmel, vagy lazíts a szűrőkön.')}</p></div>`;
     box.querySelector('.more')?.remove();
     if (res.total > iaPage * 24) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-iamore style="margin-top:14px">${tr('Továbbiak')} (${(res.total - iaPage * 24).toLocaleString(LOC())})</button>`);
   } catch { if (alive()) box.innerHTML = errorBox('Nem sikerült elérni az Internet Archive-ot. Próbáld újra kicsit később.'); }
