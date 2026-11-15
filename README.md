@@ -178,3 +178,24 @@ A magyarországi streaming-elérhetőséghez, a szolgáltatók kínálatához é
 **Feliratok:** a lejátszó felkínálja a forrás WebVTT (`.vtt`) feliratait a böngésző saját feliratválasztójában. Az Internet Archive azonban jelenleg nem engedi a feliratfájlok betöltését más oldalról (CORS), ezért ezek a legtöbb böngészőben nem jelennek meg. A projekt nem készít olyan hangsávot vagy feliratot, amelyet a forrás nem ad.
 
 **Lejátszás folytatása:** az Internet Archive-ból lejátszott filmeknél az app megjegyzi, hol tartasz. Ha bezárod az adatlapot, majd később visszatérsz ugyanahhoz a filmhez, a lejátszó onnan folytatja. A pozíció a böngésző helyi tárhelyén marad, a film végén törlődik. Másik eszközre nem szinkronizálódik, és a böngészőadatok törlésével elveszhet.
+
+## 10. Fiókok és szinkronizálás (Firebase)
+
+Bejelentkezés után a sorozatlista, a megnézett részek, az értékelések, a filmek és a kiválasztott szolgáltatók a felhasználó fiókjába mentődnek, és minden eszközén ugyanazok. A téma, a nyelv és a TMDB-kulcs eszközönként külön marad.
+
+- **Bejelentkezés:** Google-fiókkal vagy e-mail-címmel és jelszóval (regisztráció, megerősítő e-mail, elfelejtett jelszó).
+- **Első belépés egy eszközön:** az eszközön lévő adatok és a fiókban lévők összefésülődnek, így semmi nem vész el. Egy résznél a korábbi megtekintési dátum, értékelésnél és filmnél az újabb változat marad meg.
+- **Utána:** minden változás kb. 1,5 másodperc múlva felkerül a felhőbe, a másik eszközön pedig azonnal megjelenik.
+- **Kijelentkezés:** az adatok az eszközön megmaradnak. **Fióktörlés:** a felhőben tárolt adatok véglegesen törlődnek.
+- **Adatvédelem:** minden felhasználó egyetlen dokumentuma a `users/{uid}` útvonalon van; a `firestore.rules` szabályai szerint csak ő olvashatja és írhatja.
+- **Firebase nélkül** (üres `js/firebase-config.js`) a fiókok ki vannak kapcsolva, és az app minden más funkciója ugyanúgy működik.
+
+### Fiókok beállítása
+
+1. [Firebase console](https://console.firebase.google.com/): új projekt (az ingyenes Spark csomag elég).
+2. **Add app → Web (`</>`)**, név: Popcorn, Hosting nélkül. A kapott `firebaseConfig` értékeit (`apiKey`, `authDomain`, `projectId`, `appId`) írd be a `js/firebase-config.js` fájlba. Ezek nyilvános azonosítók, nem titkos kulcsok; a védelmet a szabályok adják.
+3. **Authentication → Sign-in method:** kapcsold be a *Google* és az *Email/Password* módot.
+4. **Authentication → Settings → Authorized domains:** add hozzá a `kori27.github.io` domaint (helyi futtatáshoz a `localhost` alapból engedélyezett).
+5. **Firestore Database → Create database** (európai hely, *production mode*), majd a **Rules** fülre másold be a `firestore.rules` tartalmát, és *Publish*.
+
+Ismert korlát: ha két eszközön egyszerre, internet nélkül módosítasz, a később szinkronizált eszköz változata nyer.

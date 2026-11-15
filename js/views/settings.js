@@ -21,6 +21,7 @@ async function renderSettings() {
     : tr('A háttérben futó ellenőrzéshez telepítsd az appot a kezdőképernyőre (Androidon Chrome-mal). Addig az új részeket megnyitáskor jelezzük.');
   $('#sheet').innerHTML = `<div class="sheet-bar">${closeBtnHtml()}</div>
     <div class="sheet-body"><h2 style="font:800 26px/1.1 var(--font-display);margin:0">${tr('Beállítások')}</h2>
+    ${accountPanel()}
     ${appearancePanels()}
     <div class="panel"><h3>${tr('Szolgáltatóim')}</h3><p>${tr('Jelöld be, mire fizetsz elő, vagy mit nézel ingyen. Ezeket kiemeljük a kezdőlapon és az adatlapokon.')}</p>
       <div class="chips">${SERVICES.map(s => `<button class="chip" data-service="${s.id}" aria-pressed="${state.services.includes(s.id)}">${ICON.check}${esc(s.name)}${s.free ? ` <span style="opacity:.7">(${tr('ingyenes is')})</span>` : ''}</button>`).join('')}</div></div>

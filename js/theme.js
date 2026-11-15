@@ -29,5 +29,5 @@ function applyTheme() {
 darkMq.addEventListener('change', () => state.theme.mode === 'system' && applyTheme());
 applyTheme();
 const prevVisit = state.lastVisit || Date.now();
-const save = () => { ls.set('sn.state', state); updateBadge(); syncWorkerData(); };
+const save = () => { ls.set('sn.state', state); updateBadge(); syncWorkerData(); if (typeof cloudSave === 'function') cloudSave(); };
 

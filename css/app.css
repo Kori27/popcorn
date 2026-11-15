@@ -451,3 +451,21 @@ section{gap:14px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+/* ---------- account ---------- */
+.acct .gbtn{background:var(--surface);color:var(--fg);border:1px solid var(--line);align-self:flex-start;gap:10px;box-shadow:none}
+.acct .gbtn:hover{border-color:var(--accent)}
+.acct .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}
+.acct .or::before,.acct .or::after{content:"";flex:1;height:1px;background:var(--line)}
+.acct-form{display:flex;flex-direction:column;gap:8px;margin:0}
+.acct-form input{height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:15px var(--font-body);padding:0 14px;outline:none;max-width:420px}
+.acct-form input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.acct-msg{margin:0;font-size:13.5px;color:var(--warn);min-height:0}
+.acct-msg:empty{display:none}
+.acct-msg.ok{color:var(--ok)}
+.acct-user{display:flex;align-items:center;gap:12px;min-width:0}
+.acct-user b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-user small{display:block;color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-status.err{color:var(--warn)}
+.avatar{width:46px;height:46px;border-radius:50%;flex:none;object-fit:cover;display:grid;place-items:center;background:var(--accent);color:var(--accent-fg);font:700 19px/1 var(--font-display)}
+.linkbtn.danger{color:var(--warn);align-self:flex-start;font-size:13px}
