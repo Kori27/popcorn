@@ -209,7 +209,7 @@ Ismert korlát: ha két eszközön egyszerre, internet nélkül módosítasz, a 
 A Kezdőlapon és a „Nézd most” fül tetején lévő gombbal nyílik. Először választani kell, hogy **film** vagy **sorozat** legyen, aztán három mód közül:
 
 - **🎲 Pörgetés:** posztercsík pörög, lassul, és megáll egy címen. Minden címnek van „ritkasága” az értékelése alapján (Gyakori, Ritka, Epikus, Legendás, színes kerettel); a ritkább ritkábban jön ki.
-- **❤️ Húzogatós:** kártyák egyesével; jobbra húzás (vagy ♥, illetve → billentyű) = tetszik, balra (✕, ←) = nem. Két kedvelés után egyre inkább a kedvelt műfajokhoz hasonlót mutat; 12 kártya után (vagy az „Ajánlások most” gombra) ajánlásokat ad.
+- **❤️ Bejön vagy nem?:** kártyák egyesével; jobbra húzás (vagy ♥, illetve → billentyű) = tetszik, balra (✕, ←) = nem. Két kedvelés után egyre inkább a kedvelt műfajokhoz hasonlót mutat; 12 kártya után (vagy az „Ajánlások most” gombra) ajánlásokat ad.
 - **⚔️ Párbaj:** hét körön át két cím közül kell választani (a kettő lehetőleg más műfajú), a végén a választások alapján ajánl.
 
 A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már nézted” (sorozat, ha van kipipált része) jelzéssel. Források: sorozatok a TVmaze-ből (népszerű, 7 feletti értékelésű címek), filmek TMDB-kulccsal a TMDB népszerű filmjeiből, kulcs nélkül a Wikidatából (kb. 500 ismert film magyar címmel, poszter a Wikipédiából). Az ajánlás a kedvelt és elutasított címek műfajaiból számolt súlyok alapján történik.

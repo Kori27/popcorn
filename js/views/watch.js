@@ -156,7 +156,7 @@ function videaDurationLabel(seconds) {
 }
 function videaWatchCard(item) {
   const sec = videaDurationSeconds(item.duration);
-  return `<button class="card" data-videa="${esc(item.vcode)}" data-videa-duration="${sec}" aria-label="${esc(item.title || 'Videa-videó')}">
+  return `<button class="card videa-video-card" data-videa="${esc(item.vcode)}" data-videa-duration="${sec}" aria-label="${esc(item.title || 'Videa-videó')}">
     ${item.thumbnail ? `<img class="poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
     <span class="name">${esc(item.title || 'Névtelen videó')}</span>
     <span class="meta">${sec ? videaDurationLabel(sec) : esc(item.duration || 'Hossz nem ismert')}${item.channel?.name ? ' · ' + esc(item.channel.name) : ''}</span></button>`;
@@ -362,15 +362,25 @@ function renderVideaWatch(body, alive) {
   searchKind = 'videa';
   body.innerHTML = `<p class="note">${tr('Keress a Videa nyilvános videói között, és nyisd meg őket a Popcorn beágyazott lejátszójában.')}</p>
     <div class="search">${ICON.search}<input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr('Videa-videó keresése')}" value="${esc(searchQ)}" aria-label="${tr('Videa-videó keresése')}"><button class="clear" id="qclear" type="button" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
-    <div class="sec-head"><h2>${tr('Ajánlott Videa-filmek és sorozatok')}</h2></div>
+    <div class="sec-head" id="videaRecommendedHeading"><h2>${tr('Ajánlott Videa-filmek és sorozatok')}</h2></div>
     <section id="videaRecommendedGrid" class="videa-recommendations"></section><p class="note" id="videaRecommendedStatus" aria-live="polite"></p>
     <div class="sec-head"><h2>${tr('Videa-találatok')}</h2></div>
     <section id="videaGrid" class="grid"></section><p class="note" id="videaMoreStatus" aria-live="polite"></p>
     <button class="btn ghost" id="videaMore" hidden>${tr('További találatok betöltése')}</button>`;
   const q = $('#q');
   const clearSearch = $('#qclear');
+  const setRecommendationVisibility = visible => {
+    const heading = $('#videaRecommendedHeading');
+    const grid = $('#videaRecommendedGrid');
+    const status = $('#videaRecommendedStatus');
+    if (heading) heading.hidden = !visible;
+    if (grid) grid.hidden = !visible;
+    if (status) status.hidden = !visible;
+  };
+  setRecommendationVisibility(!searchQ.trim());
   q.addEventListener('input', () => {
     searchQ = q.value;
+    setRecommendationVisibility(!searchQ.trim());
     clearSearch.hidden = !searchQ;
     videaWatchPage = 1; videaWatchItems = [];
     clearTimeout(renderVideaWatch.timer);

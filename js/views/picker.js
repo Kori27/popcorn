@@ -3,7 +3,7 @@
 'use strict';
 
 const PICK = { kind: 'tv', mode: 'spin', pools: {}, loading: null, spin: null, swipe: null, duel: null };
-const PICK_MODES = [['spin', '🎲 Pörgetés'], ['swipe', '❤️ Húzogatós'], ['duel', '⚔️ Párbaj']];
+const PICK_MODES = [['spin', '🎲 Pörgetés'], ['swipe', '❤️ Bejön vagy nem?'], ['duel', '⚔️ Párbaj']];
 
 /* ---------- pools ---------- */
 async function tvPool() {
@@ -178,7 +178,7 @@ function openPicker(push = true) {
 }
 function renderPicker() {
   const sh = $('#sheet');
-  sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}</div><div class="sheet-body picker">
+  sh.innerHTML = `<div class="sheet-bar"><span class="picker-brand">● POPCORN</span>${closeBtnHtml()}</div><div class="sheet-body picker">
     <div><h2 class="picker-title">${tr('Mit nézzek ma?')}</h2><p class="note">${tr('Válassz, hogy film vagy sorozat legyen, és hogyan döntsünk.')}</p></div>
     <div class="seg" role="group" aria-label="${tr('Típus')}">${[['tv', 'Sorozat'], ['movie', 'Film']].map(([k, l]) => `<button data-pkind="${k}" aria-pressed="${PICK.kind === k}">${tr(l)}</button>`).join('')}</div>
     <div class="seg pick-modes" role="group" aria-label="${tr('Mód')}">${PICK_MODES.map(([k, l]) => `<button data-pmode="${k}" aria-pressed="${PICK.mode === k}">${tr(l)}</button>`).join('')}</div>

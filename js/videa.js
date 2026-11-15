@@ -196,8 +196,11 @@ function videaActions(id, data, match) {
   return `<div class="actions">
     <button class="btn ${want ? 'soft' : 'primary'}" data-videa-want="${esc(id)}" aria-pressed="${want}">${want ? ICON.check : ICON.plus}${tr('Megnézendő')}</button>
     <button class="btn ${state.videaFavs[id] ? 'soft' : 'ghost'}" data-videa-fav="${esc(id)}" aria-pressed="${!!state.videaFavs[id]}">${ICON.heart}${tr(state.videaFavs[id] ? 'Kedvenc' : 'Kedvencnek jelölöm')}</button>
-  </div>
-  <div class="panel" data-videa-rating="${esc(id)}"><h3>${tr('Saját értékelésed')}</h3>
+  </div>`;
+}
+function videaRatingPanel(id) {
+  const stars = Number(state.videaRatings[id]?.stars || 0);
+  return `<div class="panel videa-rating-panel" data-videa-rating="${esc(id)}"><h3>${tr('Saját értékelésed')}</h3>
     <div class="stars" role="group" aria-label="${tr('Saját értékelésed')}">${[1,2,3,4,5].map(n => `<button class="star${n <= stars ? ' on' : ''}" data-videa-rate="${esc(id)}|${n}" aria-pressed="${n === stars}" aria-label="${tr('{n} csillag',{n})}">★</button>`).join('')}</div>
     <span class="note">${stars ? tr('Értékelve: {n}/5',{n:stars}) : tr('Koppints a csillagokra az értékeléshez.')}</span>
   </div>`;
@@ -260,7 +263,7 @@ async function playVidea(videoId) {
   sh.hidden = false;
   sh.scrollTop = 0;
   sh.innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Bezárás">${ICON.back}</button></div>
-    <div class="sheet-body"><h2>Videa-videó betöltése…</h2><div id="videaActions"></div><div id="videaMeta"><p class="note">Filmleírás és előzetes keresése…</p></div><div class="videa-embed" id="videaEmbed"></div>
+    <div class="sheet-body"><h2>Videa-videó betöltése…</h2><div id="videaActions"></div><div id="videaMeta"><p class="note">Filmleírás és előzetes keresése…</p></div><div class="videa-embed" id="videaEmbed"></div><div id="videaRatingSlot"></div>
     <p class="note" id="videaPlayerStatus" aria-live="polite">A hivatalos Videa-lejátszó betöltése folyamatban…</p></div>`;
 
   try {
@@ -272,6 +275,8 @@ async function playVidea(videoId) {
     save();
     const actionSlot = $('#videaActions');
     if (actionSlot) actionSlot.innerHTML = videaActions(videoId, data, null);
+    const ratingSlot = $('#videaRatingSlot');
+    if (ratingSlot) ratingSlot.innerHTML = videaRatingPanel(videoId);
     enrichVideaDetails(videoId, data);
     const embedHtml = data?.oembed_data?.html || '';
     const parsed = new DOMParser().parseFromString(embedHtml, 'text/html');
