@@ -94,6 +94,55 @@ async function localPickSummary(it) {
   return result;
 }
 
+
+/* ---------- Videa availability hints for picker results ---------- */
+const PICK_VIDEA_MATCHES = new Map();
+const pickNorm = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLocaleLowerCase('hu').replace(/[^a-z0-9]+/g, ' ').trim();
+function pickVideaCandidate(item, videos) {
+  const title = pickNorm(item.title);
+  const yearText = String(item.year || '');
+  const candidates = (videos || []).filter(v => v?.vcode && videaDurationSeconds(v.duration) >= 20 * 60);
+  const scored = candidates.map(v => {
+    const vt = pickNorm(v.title);
+    let score = vt === title ? 100 : (vt.includes(title) || title.includes(vt)) ? 75 : 0;
+    if (item.kind === 'tv' && typeof videaEpisodeInfo === 'function') {
+      const ep = videaEpisodeInfo(v);
+      if (ep && (pickNorm(ep.key) === title || title.includes(pickNorm(ep.key)))) score = Math.max(score, 90);
+    }
+    if (yearText && vt.includes(yearText)) score += 5;
+    return { v, score };
+  }).filter(x => x.score >= 75).sort((a, b) => b.score - a.score);
+  return scored[0]?.v || null;
+}
+function pickerVideaHint(item, target) {
+  if (!target || target.dataset.checked === '1') return;
+  target.dataset.checked = '1';
+  const key = `${item.kind}:${item.id}`;
+  const task = PICK_VIDEA_MATCHES.get(key) || (async () => {
+    const response = await searchVideaVideos(item.title, 1);
+    return pickVideaCandidate(item, response?.videos);
+  })();
+  PICK_VIDEA_MATCHES.set(key, task);
+  task.then(match => {
+    if (!match || !target.isConnected) return;
+    target.innerHTML = `<button class="btn ghost small" type="button" data-pick-videa="${esc(match.vcode)}">▶ ${tr('Megtalálható a Videán')}</button>`;
+  }).catch(() => { /* A Videa-keresés opcionális; a fő ajánlás ettől működik tovább. */ });
+}
+function enhancePickerVideaHints(root = $('#pickArea')) {
+  if (!root) return;
+  root.querySelectorAll('[data-pick-videa-check]').forEach(target => {
+    const item = PICK_VIDEA_ITEMS.get(target.dataset.pickVideaCheck);
+    if (item) pickerVideaHint(item, target);
+  });
+}
+const PICK_VIDEA_ITEMS = new Map();
+function registerPickerVideaItem(item) {
+  const key = `${item.kind}:${item.id}`;
+  PICK_VIDEA_ITEMS.set(key, item);
+  return key;
+}
+
 /* ---------- helpers ---------- */
 const RARITY = [[8.5, 'legend', 'Legendás'], [7.8, 'epic', 'Epikus'], [7, 'rare', 'Ritka'], [0, 'common', 'Gyakori']];
 const rarityOf = it => RARITY.find(([min]) => it.rating >= min);
@@ -186,7 +235,7 @@ async function startSpin() {
     await ensureImage(s.win);
     if (state.lang !== 'en') await localPickSummary(s.win);
     if (PICK.spin !== s || !$('#spinResult')) return;
-    $('#spinResult').innerHTML = spinResult(s.win);
+    $('#spinResult').innerHTML = spinResult(s.win); enhancePickerVideaHints($('#spinResult'));
     const b = $('[data-pspin]'); if (b) { b.disabled = false; b.textContent = tr('Újra pörgetés'); }
   };
   // only the strip's own transform transition counts (tiles have hover transitions that bubble up)
@@ -202,7 +251,7 @@ function spinResult(it) {
       <p class="note">${esc([it.year, it.rating ? '★ ' + it.rating.toFixed(1) : '', it.genres.slice(0, 3).map(pickName(it)).join(', ')].filter(Boolean).join(' · '))}</p>
       ${w ? `<span class="seen-badge inline">✓ ${esc(w)}</span>` : ''}
       ${it.summary ? `<p class="spin-sum">${esc(it.summary)}</p>` : ''}
-      <button class="btn primary" ${it.open}>${tr('Adatlap megnyitása')}</button></div></div>`;
+      <button class="btn primary" ${it.open}>${tr('Adatlap megnyitása')}</button><span class="pick-videa-hint" data-pick-videa-check="${esc(registerPickerVideaItem(it))}"></span></div></div>`;
 }
 
 /* ---------- ❤️ swipe ---------- */
@@ -211,7 +260,7 @@ function renderSwipe(pool) {
   let s = PICK.swipe;
   if (!s || s.kind !== PICK.kind) s = PICK.swipe = { kind: PICK.kind, weights: {}, seen: new Set(), liked: [], count: 0, current: null, done: false };
   const area = $('#pickArea');
-  if (s.done) { area.innerHTML = resultsHtml(pool, s.weights, s.seen, s.liked, 'swipe'); return; }
+  if (s.done) { area.innerHTML = resultsHtml(pool, s.weights, s.seen, s.liked, 'swipe'); enhancePickerVideaHints(area); return; }
   if (!s.current) s.current = nextSwipe(pool, s);
   const it = s.current, w = watchedLabel(it);
   area.innerHTML = `<p class="note" style="text-align:center">${tr('Húzd jobbra, ha tetszik, balra, ha nem. {n}/{m}', { n: s.count + 1, m: SWIPE_ROUNDS })}</p>
@@ -265,7 +314,7 @@ function renderDuel(pool) {
   let d = PICK.duel;
   if (!d || d.kind !== PICK.kind) d = PICK.duel = { kind: PICK.kind, weights: {}, seen: new Set(), picks: [], round: 0, pair: null, done: false };
   const area = $('#pickArea');
-  if (d.done) { area.innerHTML = resultsHtml(pool, d.weights, d.seen, d.picks, 'duel'); return; }
+  if (d.done) { area.innerHTML = resultsHtml(pool, d.weights, d.seen, d.picks, 'duel'); enhancePickerVideaHints(area); return; }
   if (!d.pair) d.pair = duelPair(pool, d);
   area.innerHTML = `<p class="note" style="text-align:center">${tr('Melyiket néznéd szívesebben? {n}/{m}. kör', { n: d.round + 1, m: DUEL_ROUNDS })}</p>
     <div class="duel">${d.pair.map((it, i) => `<button class="duel-card" data-pduel="${i}">${tileImg(it)}${watchedLabel(it) ? `<span class="seen-badge">✓ ${esc(watchedLabel(it))}</span>` : ''}
@@ -301,13 +350,15 @@ function resultsHtml(pool, weights, seen, chosen, mode) {
   return `<div class="pick-results">
     <div class="pick-results-head"><h3>${tr('Neked ajánljuk')}</h3><button class="btn primary" data-prestart>${tr('Új kör')}</button></div>
     ${top.length ? `<p class="note">${tr('Ezek alapján: {g}', { g: top.map(map).join(', ') })}</p>` : `<p class="note">${tr('Még nem kedveltél semmit, ezért vegyes válogatás jön.')}</p>`}
-    <div class="grid">${recs.map(it => itemCard(it)).join('')}</div>
-    ${chosen.length ? `<h3>${tr(mode === 'duel' ? 'A választásaid' : 'Ezek tetszettek')}</h3><div class="grid">${chosen.map(it => itemCard(it)).join('')}</div>` : ''}
+    <div class="grid">${recs.map(it => { const k = registerPickerVideaItem(it); return `<div class="pick-result-item">${itemCard(it)}<span class="pick-videa-hint" data-pick-videa-check="${esc(k)}"></span></div>`; }).join('')}</div>
+    ${chosen.length ? `<h3>${tr(mode === 'duel' ? 'A választásaid' : 'Ezek tetszettek')}</h3><div class="grid">${chosen.map(it => { const k = registerPickerVideaItem(it); return `<div class="pick-result-item">${itemCard(it)}<span class="pick-videa-hint" data-pick-videa-check="${esc(k)}"></span></div>`; }).join('')}</div>` : ''}
     </div>`;
 }
 
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
+  const videaTarget = e.target.closest?.('[data-pick-videa]');
+  if (videaTarget) { e.preventDefault(); e.stopPropagation(); playVidea(videaTarget.dataset.pickVidea); return; }
   const t = e.target.closest?.('[data-pkind],[data-pmode],[data-pspin],[data-pswipe],[data-pduel],[data-presults],[data-prestart],[data-picker]');
   if (!t) return;
   if (t.hasAttribute('data-picker')) { if (history.state?.picker) return; openPicker(); return; }

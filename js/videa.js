@@ -312,6 +312,9 @@ async function playVidea(videoId) {
           events: {
             onReady: (player) => {
               startVideaProgress(videoId, player);
+              // Set the Videa player's initial volume to 50% (the API uses a 0–100 scale).
+              // This is available when the user has configured a valid Videa PlayerAPI key.
+              try { player.setVolume?.(50); } catch (_) {}
               const note = $('#videaPlayerStatus');
               if (note) note.textContent = 'A Videa-lejátszó készen áll.';
             },

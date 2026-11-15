@@ -61,7 +61,7 @@ function iaSearch(text, page) {
     d => ({ total: d.response?.numFound || 0, docs: (d.response?.docs || []).map(x => ({ id: x.identifier, title: Array.isArray(x.title) ? x.title[0] : x.title, year: x.year })) }));
 }
 const filmCard = f => `<button class="card" data-film="${esc(f.id)}" aria-label="${esc(f.title)}">
-  <img class="poster" src="${iaThumb(f.id)}" alt="${esc(f.title)}" loading="lazy" onerror="this.outerHTML='<div class=&quot;poster-ph&quot;>'+this.alt.replace(/[<&]/g,'')+'</div>'">
+  <div class="poster-ph" data-ia-poster="${esc(f.id)}">${esc(f.title)}</div>
   <span class="name">${esc(f.title)}</span><span class="meta">${esc(f.year || tr('Klasszikus'))}</span></button>`;
 
 /* ---------- modern open-licence films (checked by hand: real releases under Creative Commons) ---------- */
@@ -171,33 +171,148 @@ function applyVideaWatchFilter() {
     card.hidden = !show;
     if (show) visible++;
   });
-  const count = $('#videaVisibleCount');
-  if (count) count.textContent = `${visible} releváns videó`;
+
+}
+function videaEpisodeInfo(item) {
+  const title = String(item.title || '').trim();
+  const patterns = [
+    /^(.*?)\s+(?:s|season)\s*0?(\d{1,2})\s*[-._ ]?e(?:p)?\s*0?(\d{1,3})\b/i,
+    /^(.*?)\s+0?(\d{1,2})\s*x\s*0?(\d{1,3})\b/i,
+    /^(.*?)\s+(\d{1,2})\.\s*évad\s*(\d{1,3})\.?\s*rész/i,
+    /^(.*?)\s+(\d{1,3})\.?\s*rész\b/i
+  ];
+  for (const re of patterns) {
+    const m = title.match(re);
+    if (m && m[1].trim().length >= 3) return { key: m[1].trim(), season: m[2], episode: m[3] || '' };
+  }
+  return null;
+}
+function videaRenderGrouped(items) {
+  const groups = new Map(), singles = [];
+  for (const item of items) {
+    const ep = videaEpisodeInfo(item);
+    if (!ep) { singles.push(item); continue; }
+    const key = ep.key.toLocaleLowerCase('hu');
+    if (!groups.has(key)) groups.set(key, { title: ep.key, items: [] });
+    groups.get(key).items.push(item);
+  }
+  const grouped = [...groups.values()].filter(g => g.items.length >= 2);
+  const groupedIds = new Set(grouped.flatMap(g => g.items.map(x => x.vcode)));
+  const solo = [...singles, ...[...groups.values()].filter(g => g.items.length < 2).flatMap(g => g.items)];
+  const card = videaWatchCard;
+  return `${grouped.map(g => `<section class="videa-series-group"><div class="sec-head"><h3>${esc(g.title)}</h3><span class="note">${g.items.length} epizód</span></div><div class="grid">${g.items.map(card).join('')}</div></section>`).join('')}${solo.length ? `<section class="grid">${solo.map(card).join('')}</section>` : ''}`;
+}
+let videaWatchItems = [];
+let videaRecommendedItems = [];
+let videaRecommendationsLoading = false;
+async function loadVideaRecommendations(alive) {
+  if (videaRecommendationsLoading || videaRecommendedItems.length) return;
+  videaRecommendationsLoading = true;
+  const grid = $('#videaRecommendedGrid');
+  const status = $('#videaRecommendedStatus');
+  if (!grid) { videaRecommendationsLoading = false; return; }
+  if (status) status.textContent = 'Ajánlások betöltése…';
+  const queries = ['teljes film', 'film magyarul', 'akció film', 'vígjáték film'];
+  const seen = new Set();
+  const collected = [];
+  const addEligible = item => {
+    if (!item?.vcode || seen.has(item.vcode)) return false;
+    seen.add(item.vcode);
+    if (videaDurationSeconds(item.duration) < 20 * 60) return false;
+    collected.push(item);
+    return true;
+  };
+  try {
+    for (const query of queries) {
+      const response = await searchVideaVideos(query, 1);
+      if (!alive()) return;
+      for (const item of (Array.isArray(response?.videos) ? response.videos : [])) addEligible(item);
+      if (collected.length >= 12) break;
+    }
+
+    // Ha az ajánlás egy sorozatepizód, keressük meg a többi epizódját is,
+    // és egyetlen sorozatcsoportként jelenítsük meg (20 perces szűrés itt is).
+    const series = new Map();
+    for (const item of collected) {
+      const ep = videaEpisodeInfo(item);
+      if (!ep) continue;
+      const key = ep.key.toLocaleLowerCase('hu');
+      if (!series.has(key)) series.set(key, ep.key);
+    }
+    for (const [key, seriesTitle] of series) {
+      for (let page = 1; page <= 3; page++) {
+        const response = await searchVideaVideos(seriesTitle, page);
+        if (!alive()) return;
+        const items = Array.isArray(response?.videos) ? response.videos : [];
+        if (!items.length) break;
+        let added = 0;
+        for (const item of items) {
+          const ep = videaEpisodeInfo(item);
+          if (ep && ep.key.toLocaleLowerCase('hu') === key && addEligible(item)) added++;
+        }
+        if (!added && page > 1) break;
+      }
+    }
+
+    if (!alive() || !document.getElementById('videaRecommendedGrid')) return;
+    // A sorozatcsoport csak az összes összegyűjtött, 20+ perces epizódot tartalmazza.
+    videaRecommendedItems = collected;
+    grid.innerHTML = videaRecommendedItems.length
+      ? videaRenderGrouped(videaRecommendedItems)
+      : `<p class="note">${tr('Most nem találtunk megfelelő hosszúságú ajánlott videót.')}</p>`;
+    if (status) status.textContent = '';
+  } catch (error) {
+    if (status) status.textContent = tr('Az ajánlások most nem tölthetők be.');
+  } finally { videaRecommendationsLoading = false; }
 }
 async function loadVideaWatchPage(query, alive, append = false) {
   if (videaWatchBusy || !query.trim()) return;
   videaWatchBusy = true;
   const status = $('#videaMoreStatus');
   const more = $('#videaMore');
+  const count = $('#videaRelevantCount');
   if (more) { more.disabled = true; more.textContent = 'Betöltés…'; }
+  if (status) status.textContent = 'A legalább 20 perces videók keresése…';
   try {
-    const page = append ? videaWatchPage + 1 : 1;
-    const response = await searchVideaVideos(query, page);
-    if (!alive() || query !== searchQ.trim()) return;
-    const items = Array.isArray(response?.videos) ? response.videos : [];
+    let page = append ? videaWatchPage : 1;
+    const seen = new Set(videaWatchItems.map(x => x.vcode));
+    const collected = [];
+    let pagesRead = 0;
+    let exhausted = false;
+    // Egy gombnyomás több keresési oldalt is átnéz, és csak a 20+ perces
+    // videókat gyűjti be. Így a rövid videók nem foglalják a találati helyeket.
+    while (pagesRead < 8 && collected.length < 18) {
+      const response = await searchVideaVideos(query, page);
+      if (!alive() || query !== searchQ.trim()) return;
+      const items = Array.isArray(response?.videos) ? response.videos : [];
+      pagesRead++;
+      if (!items.length) { exhausted = true; break; }
+      let newOnPage = 0;
+      for (const item of items) {
+        if (!item?.vcode || seen.has(item.vcode)) continue;
+        seen.add(item.vcode);
+        newOnPage++;
+        const duration = videaDurationSeconds(item.duration);
+        if (duration >= 20 * 60) collected.push(item);
+      }
+      page++;
+      if (!newOnPage) { exhausted = true; break; }
+    }
     const grid = $('#videaGrid');
     if (!grid) return;
-    const seen = new Set([...grid.querySelectorAll('[data-videa]')].map(x => x.dataset.videa));
-    const fresh = items.filter(x => x?.vcode && !seen.has(x.vcode));
-    if (!append) grid.innerHTML = '';
-    if (fresh.length) grid.insertAdjacentHTML('beforeend', fresh.map(videaWatchCard).join(''));
+    if (!append) videaWatchItems = [];
+    videaWatchItems.push(...collected);
+    grid.innerHTML = videaRenderGrouped(videaWatchItems);
     videaWatchPage = page;
-    if (status) status.textContent = fresh.length ? `${grid.querySelectorAll('[data-videa]').length} videó betöltve` : 'Nincs több különálló találat ezen az oldalon.';
+    if (count) count.textContent = `${videaWatchItems.length} releváns videó`;
+    if (status) status.textContent = collected.length
+      ? ''
+      : (videaWatchItems.length ? 'Nincs újabb 20 percnél hosszabb videó ezen a körön.' : 'Nem találtunk legalább 20 perces videót.');
     if (more) {
-      if (!fresh.length) more.hidden = true;
-      else { more.hidden = false; more.disabled = false; more.textContent = 'További találatok betöltése'; }
+      more.hidden = exhausted;
+      more.disabled = false;
+      more.textContent = 'További találatok betöltése';
     }
-    applyVideaWatchFilter();
   } catch (error) {
     if (status) status.textContent = `A keresés nem sikerült: ${error?.message || error}`;
     if (more) { more.hidden = false; more.disabled = false; more.textContent = 'Újrapróbálás'; }
@@ -206,29 +321,35 @@ async function loadVideaWatchPage(query, alive, append = false) {
 function renderVideaWatch(body, alive) {
   searchKind = 'videa';
   body.innerHTML = `<p class="note">${tr('Keress a Videa nyilvános videói között, és nyisd meg őket a Popcorn beágyazott lejátszójában.')}</p>
-    <div class="search">${ICON.search}<input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr('Videa-videó keresése')}" value="${esc(searchQ)}" aria-label="${tr('Videa-videó keresése')}">
-    <button class="clear" id="qclear" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
-    <div class="filter-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0">
-      <span class="note">${tr('Csak a legalább 20 perces videók jelennek meg.')}</span>
-      <span class="note" id="videaVisibleCount"></span>
-    </div>
+    <div class="sec-head"><h2>${tr('Ajánlott Videa-filmek')}</h2></div>
+    <section id="videaRecommendedGrid" class="grid"></section><p class="note" id="videaRecommendedStatus" aria-live="polite"></p>
+    <div class="search">${ICON.search}<input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr('Videa-videó keresése')}" value="${esc(searchQ)}" aria-label="${tr('Videa-videó keresése')}"><button class="clear" id="qclear" type="button" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
     <div class="sec-head"><h2>${tr('Videa-találatok')}</h2></div>
     <section id="videaGrid" class="grid"></section><p class="note" id="videaMoreStatus" aria-live="polite"></p>
     <button class="btn ghost" id="videaMore" hidden>${tr('További találatok betöltése')}</button>`;
   const q = $('#q');
+  const clearSearch = $('#qclear');
   q.addEventListener('input', () => {
-    searchQ = q.value; $('#qclear').hidden = !searchQ; videaWatchPage = 1;
+    searchQ = q.value;
+    clearSearch.hidden = !searchQ;
+    videaWatchPage = 1; videaWatchItems = [];
     clearTimeout(renderVideaWatch.timer);
     renderVideaWatch.timer = setTimeout(() => loadVideaWatchPage(searchQ, alive, false), 350);
+  });
+  clearSearch.addEventListener('click', () => {
+    q.value = ''; searchQ = ''; clearSearch.hidden = true;
+    videaWatchPage = 1; videaWatchItems = [];
+    clearTimeout(renderVideaWatch.timer);
+    loadVideaWatchPage('', alive, false);
+    q.focus();
   });
   q.addEventListener('keydown', e => {
     if (e.key === 'Enter') { clearTimeout(renderVideaWatch.timer); loadVideaWatchPage(searchQ, alive, false); q.blur(); }
   });
-  $('#qclear').addEventListener('click', () => {
-    searchQ = ''; q.value = ''; $('#qclear').hidden = true; $('#videaGrid').innerHTML = '';
-    $('#videaMore').hidden = true; q.focus();
-  });
   $('#videaMore').addEventListener('click', () => loadVideaWatchPage(searchQ, alive, true));
+  videaWatchItems = [];
+  videaRecommendedItems = [];
+  loadVideaRecommendations(alive);
   if (searchQ.trim()) loadVideaWatchPage(searchQ, alive, false);
 }
 
@@ -297,6 +418,7 @@ async function loadFree(alive, append) {
     } else box.innerHTML = `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr('Ezekkel a szűrőkkel most nincs nézhető cím. Lazíts a szűrőkön.')}</p></div>`;
     const count = box.querySelector('.count');
     if (count) count.textContent = tr('{n} ellenőrzött cím', { n: freeShown });
+    hydrateClassicPosters(box);
     box.querySelector('.more')?.remove();
     if (d.page < Math.min(d.total_pages || 1, 20)) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-freemore style="margin-top:14px">${tr('Továbbiak')}</button>`);
   } catch (e) { if (alive()) box.innerHTML = keyError(e); }
@@ -314,15 +436,61 @@ async function openTmdbTv(id) {
   window.open(`https://www.themoviedb.org/tv/${id}/watch?locale=HU`, '_blank', 'noopener');
 }
 
+const openPosterCache = new Map();
+function normPosterTitle(v) { return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+async function findTmdbPoster(title, year) {
+  if (!tmdbKey()) return null;
+  const key = `${normPosterTitle(title)}|${year || ''}`;
+  if (openPosterCache.has(key)) return openPosterCache.get(key);
+  const task = (async () => {
+    try {
+      const d = await tmdb(`/search/movie?query=${encodeURIComponent(title)}&year=${encodeURIComponent(year || '')}&language=${TLANG()}&include_adult=false`, 7 * DAY);
+      const wanted = normPosterTitle(title);
+      const hit = (d.results || []).find(x => {
+        const names = [x.title, x.original_title].map(normPosterTitle);
+        const y = Number((x.release_date || '').slice(0, 4));
+        return names.includes(wanted) && (!year || !y || Math.abs(y - Number(year)) <= 1) && x.poster_path;
+      });
+      return hit ? `${TIMG}w500${hit.poster_path}` : null;
+    } catch { return null; }
+  })();
+  openPosterCache.set(key, task);
+  return task;
+}
+function hydrateOpenPosters(root) {
+  root.querySelectorAll('[data-open-poster]').forEach(async el => {
+    const f = OPEN_FILMS.find(x => x[0] === el.dataset.openPoster);
+    if (!f) return;
+    const url = await findTmdbPoster(f[1], f[2]);
+    if (url && el.isConnected) {
+      const img = document.createElement('img');
+      img.className = 'poster'; img.alt = f[1]; img.loading = 'lazy'; img.src = url;
+      el.replaceWith(img);
+    }
+  });
+}
+function hydrateClassicPosters(root) {
+  root.querySelectorAll('[data-ia-poster]').forEach(async el => {
+    const title = el.textContent || '';
+    const url = await findTmdbPoster(title, '');
+    if (url && el.isConnected) {
+      const img = document.createElement('img');
+      img.className = 'poster'; img.alt = title; img.loading = 'lazy'; img.src = url;
+      el.replaceWith(img);
+    }
+  });
+}
+
 function renderOpen(body) {
   const kind = fget('openKind', 'all');
   const list = OPEN_FILMS.filter(f => kind === 'all' || (kind === 'anim' ? f[3] === 'Animáció' : f[3] !== 'Animáció'));
   body.innerHTML = `<p class="note">${tr('Modern, színes filmek, amelyeket az alkotóik szabad (Creative Commons) licenccel tettek közzé. Az appban indulnak, reklám nélkül. Angol nyelvűek; több közülük párbeszéd nélküli.')}</p>
     ${filterBar('open', [{ id: 'openKind', label: 'Fajta', def: 'all', options: [['all', 'Mind'], ['anim', 'Animáció'], ['live', 'Élőszereplős']] }])}
     <div class="grid">${list.map(([id, title, year, , genre]) => `<button class="card" data-film="${esc(id)}" aria-label="${esc(title)}">
-      <img class="poster" src="${iaThumb(id)}" alt="${esc(title)}" loading="lazy" style="aspect-ratio:2/3;object-fit:cover" onerror="this.outerHTML='<div class=&quot;poster-ph&quot;>'+this.alt.replace(/[<&]/g,'')+'</div>'">
+      <div class="poster-ph" data-open-poster="${esc(id)}">${esc(title)}</div>
       <span class="name">${esc(title)}</span><span class="meta">${year} · ${esc(tr(genre))}</span></button>`).join('')}</div>
     ${freeHuPanel()}`;
+  hydrateOpenPosters(body);
 }
 
 function renderClassic(body, alive) {
@@ -353,6 +521,7 @@ async function loadIA(alive, append) {
     else box.innerHTML = res.docs.length
       ? `<div class="sec-head"><span class="count">${tr('{n} találat', { n: res.total.toLocaleString(LOC()) })}</span></div><div class="grid">${cards}</div>`
       : `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr(fget('iaLang', 'all') === 'hu' ? 'Magyar nyelvű közkincs film alig van az archívumban. Nézd meg a „Most nézhető” fület vagy a lenti magyar forrásokat.' : 'Próbáld angol címmel, vagy lazíts a szűrőkön.')}</p></div>`;
+    hydrateClassicPosters(box);
     box.querySelector('.more')?.remove();
     if (res.total > iaPage * 24) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-iamore style="margin-top:14px">${tr('Továbbiak')} (${(res.total - iaPage * 24).toLocaleString(LOC())})</button>`);
   } catch { if (alive()) box.innerHTML = errorBox('Nem sikerült elérni az Internet Archive-ot. Próbáld újra kicsit később.'); }
@@ -381,7 +550,7 @@ async function openFilm(id, push = true) {
     const subtitles = m.files.filter(f => /\.vtt$/i.test(f.name));
     const src = f => `${IA}/download/${encodeURIComponent(id)}/${f.name.split('/').map(encodeURIComponent).join('/')}`;
     const title = open ? open[1] : m.title, year = open ? open[2] : m.year;
-    let matched = null, poster = iaThumb(id), overview = '', trailer = null;
+    let matched = null, poster = null, overview = '', trailer = null;
     // Csak ellenőrzött azonosító vagy egyező cím + év alapján veszünk át TMDB-adatot.
     if (tmdbKey()) {
       try {
