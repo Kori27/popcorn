@@ -2,19 +2,24 @@
 'use strict';
 
 /* ---------- Detail sheet ---------- */
-let sheetShow = null, sheetSeason = null, sheetEps = [], summaryOpen = false, sheetHu = null;
+let sheetShow = null, sheetSeason = null, sheetEps = [], summaryOpen = false, sheetHu = null, sheetProv;
 function whereSection(s) {
-  const sv = serviceOf(s), my = mine(s), title = sheetHu || s.name, q = encodeURIComponent(title);
+  const sv = serviceOf(s), title = sheetHu || s.name, q = encodeURIComponent(title);
+  const exact = sheetProv && typeof sheetProv === 'object' ? myProviders(sheetProv) : [];
+  const known = sheetProv === null || (sheetProv && typeof sheetProv === 'object');
+  const my = exact[0] || (known ? null : mine(s));
   const link = (href, name, note) => `<a href="${esc(href)}" target="_blank" rel="noopener"><b>${esc(name)}</b><small>${esc(note)}</small>${ICON.ext}</a>`;
   const rows = [link(`https://www.justwatch.com/hu/search?q=${encodeURIComponent(s.name)}`, 'JustWatch', tr('Minden magyarországi szolgáltató egy helyen, az ingyenes lehetőségekkel együtt'))];
   if (sv?.id === 'mtva' || !sv || sv.free) rows.push(link(`https://mediaklikk.hu/?s=${q}`, 'Médiaklikk', tr('Ingyenes közmédia (M1, Duna, M2) · keresés erre: {t}', { t: title })));
   if (sv?.id === 'rtl') rows.push(link(sv.url, 'RTL+', tr('Részben ingyenes · megnyitja a keresőt, írd be: {t}', { t: title })));
   if (sv?.id === 'tv2') rows.push(link(sv.url, 'TV2 Play', tr('Részben ingyenes · megnyitja a keresőt, írd be: {t}', { t: title })));
-  const head = my ? `<span class="pill ok">✓ ${tr('Valószínűleg benne van')}: ${esc(my.name)}</span>`
-    : sv ? `<span class="pill ${sv.free ? 'ok' : 'neutral'}">${tr('Eredeti csatorna')}: ${esc(sv.name)}${sv.free ? ' · ' + tr('ingyenes is lehet') : ''}</span>` : '';
+  const head = exact.length ? `<span class="pill ok">✓ ${tr('Nálad elérhető')}: ${esc(exact.map(x => x.name).join(', '))}</span>`
+    : my ? `<span class="pill ok">✓ ${tr('Valószínűleg benne van')}: ${esc(my.name)}</span>`
+    : sv && !known ? `<span class="pill ${sv.free ? 'ok' : 'neutral'}">${tr('Eredeti csatorna')}: ${esc(sv.name)}${sv.free ? ' · ' + tr('ingyenes is lehet') : ''}</span>` : '';
   return `<div class="panel" id="where"><h3>${tr('Hol nézhető?')}</h3>${head ? `<div>${head}</div>` : ''}
+    <div data-provslot>${providersHtml(sheetProv)}</div>
     <div class="where">${rows.join('')}</div>
-    <p>${tr('Az előfizetéses egyezést az eredeti csatorna alapján becsüljük. Magyarországon egy sorozat néha máshol fut, ezt a JustWatch pontosan mutatja.')}</p></div>`;
+    ${known ? '' : `<p>${tr('Az előfizetéses egyezést az eredeti csatorna alapján becsüljük. Magyarországon egy sorozat néha máshol fut, ezt a JustWatch pontosan mutatja.')}</p>`}</div>`;
 }
 function renderPlaceholder() {
   sheetShow = null;
@@ -46,8 +51,16 @@ async function openShow(id, push = true) {
     const seasons = [...new Set(regular(sheetEps).map(e => e.s))];
     sheetSeason = p.next ? p.next.s : seasons[seasons.length - 1] ?? null;
     sheetTrailerNode = null;
+    sheetProv = tmdbKey() ? undefined : 'nokey';
     renderSheet();
     fillTrailer(tmdbKey() ? trailerForShow(show) : null, sheetHu || show.name);
+    if (tmdbKey()) {
+      const r = await resolveProviders(tmdbTvId(show).then(tid => providersFor('tv', tid)));
+      if (sheetShow?.id !== id || location.hash !== '#sorozat-' + id) return;
+      sheetProv = r;
+      const w = $('#sheet #where');
+      if (w) w.outerHTML = whereSection(sheetShow);
+    }
   } catch {
     sh.querySelector('.sheet-body').innerHTML = errorBox(NET_ERR);
   }
@@ -58,7 +71,7 @@ function closeShow() {
   if (wide.matches) renderPlaceholder(); else { $('#sheet').hidden = true; sheetShow = null; }
   render(); // reflect any changes
 }
-const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie);
+const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie || history.state?.wfilm);
 function pushSheet(st, hash) { if (wide.matches && sheetOpen()) history.replaceState(st, '', hash); else history.pushState(st, '', hash); }
 function showSheet() {
   const sh = $('#sheet'); sh.hidden = false; sh.scrollTop = 0; sheetShow = null;

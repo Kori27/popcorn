@@ -35,7 +35,7 @@ async function renderSettings() {
       <div class="field"><input id="tmdbKey" type="password" autocomplete="off" spellcheck="false" placeholder="${tr('API Key vagy API Read Access Token')}" value="${esc(state.tmdb || '')}" aria-label="${tr('TMDB-kulcs')}">
         <button class="btn primary" data-tmdb="save">${tr('Mentés')}</button>${tmdbKey() ? `<button class="btn ghost" data-tmdb="clear">${tr('Törlés')}</button>` : ''}</div>
       <p id="tmdbMsg" aria-live="polite"></p></div>
-    <div class="panel"><h3>${tr('Adatok')}</h3><p>${tr('A listád, az értékeléseid és a megnézett részek csak ezen az eszközön vannak tárolva. A sorozatadatok forrása a TVmaze nyilvános adatbázisa.')}</p></div>
+    ${backupPanel()}
     </div>`;
 }
 function appearancePanels() {

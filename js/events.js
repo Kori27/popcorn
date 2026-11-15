@@ -3,25 +3,31 @@
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-genre],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-ratekind],[data-ratesort],[data-lang],[data-mode],[data-accent],[data-size],[data-oled]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv]');
   if (!t) return;
   if (t.dataset.yt) { playYouTube(t); return; }
   if (t.dataset.film) { openFilm(t.dataset.film); return; }
   if (t.dataset.movie) { openMovie(+t.dataset.movie); return; }
-  if (t.dataset.genre) { iaGenre = t.dataset.genre; iaPage = 1; document.querySelectorAll('[data-genre]').forEach(b => b.setAttribute('aria-pressed', b === t)); const id = renderId; loadIA(() => id === renderId, false); return; }
+  if (t.dataset.wfilm) { openWikiFilm(t.dataset.wfilm); return; }
+  if (t.dataset.tmdbtv) { openTmdbTv(+t.dataset.tmdbtv); return; }
+  if (t.dataset.mvstatus) { const i = t.dataset.mvstatus.lastIndexOf('|'); setMovieStatus(t.dataset.mvstatus.slice(0, i), t.dataset.mvstatus.slice(i + 1)); return; }
+  if (t.dataset.mvquick) { t.setAttribute('aria-pressed', t.getAttribute('aria-pressed') !== 'true'); toggleMovieSeen(t.dataset.mvquick); return; }
+  if (t.dataset.skind) { searchKind = t.dataset.skind; render(); return; }
+  if (t.dataset.filmseg) { filmSeg = t.dataset.filmseg; render(); return; }
+  if (t.dataset.wseg) { watchSeg = t.dataset.wseg; fset('watchSeg', watchSeg); render(); return; }
+  if (t.hasAttribute('data-backup')) { exportBackup(); return; }
   if (t.hasAttribute('data-iamore')) { iaPage++; t.disabled = true; t.textContent = tr('Betöltés…'); const id = renderId; loadIA(() => id === renderId, true); return; }
+  if (t.hasAttribute('data-freemore')) { freePage++; t.disabled = true; t.textContent = tr('Betöltés…'); const id = renderId; loadFree(() => id === renderId, true); return; }
   if (t.dataset.tmdb) { saveTmdb(t.dataset.tmdb === 'clear'); return; }
   if (t.dataset.rate) { const i = t.dataset.rate.lastIndexOf('|'); setRating(t.dataset.rate.slice(0, i), +t.dataset.rate.slice(i + 1)); return; }
   if (t.dataset.unrate) { setRating(t.dataset.unrate, 0); return; }
   if (t.dataset.libseg) { libSeg = t.dataset.libseg; render(); return; }
-  if (t.dataset.ratekind) { rateKind = t.dataset.ratekind; render(); return; }
-  if (t.dataset.ratesort) { rateSort = t.dataset.ratesort; render(); return; }
   if (t.dataset.lang) { setAppearance('lang', t.dataset.lang); return; }
   if (t.dataset.mode) { setAppearance('mode', t.dataset.mode); return; }
   if (t.dataset.accent) { setAppearance('accent', t.dataset.accent); return; }
   if (t.dataset.size) { setAppearance('size', t.dataset.size); return; }
   if (t.hasAttribute('data-oled')) { setAppearance('oled'); return; }
-  if (t.dataset.tab) { if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
+  if (t.dataset.tab) { if (t.dataset.skindgo) searchKind = t.dataset.skindgo; if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
   if (t.hasAttribute('data-close')) { sheetOpen() ? history.back() : closeShow(); return; }
   if (t.hasAttribute('data-settings')) {
@@ -59,8 +65,9 @@ document.addEventListener('click', async e => {
 });
 window.addEventListener('popstate', () => {
   const m = location.hash.match(/^#sorozat-(\d+)$/);
-  const f = location.hash.match(/^#film-(.+)$/), mv = location.hash.match(/^#mozi-(\d+)$/);
+  const f = location.hash.match(/^#film-(.+)$/), mv = location.hash.match(/^#mozi-(\d+)$/), wf = location.hash.match(/^#wfilm-(Q\d+)$/);
   if (m) openShow(+m[1], false);
+  else if (wf) openWikiFilm(wf[1], false);
   else if (f) openFilm(decodeURIComponent(f[1]), false);
   else if (mv) openMovie(+mv[1], false);
   else if (location.hash === '#beallitasok') openSettings(false);

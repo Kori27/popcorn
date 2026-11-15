@@ -24,18 +24,19 @@ Az app három nyelven (magyar, angol, német) használható, és testre szabhat�
 | Fül / rész | Mit tud |
 |---|---|
 | **Kezdőlap** | „Folytasd” lista a következő meg nem nézett résszel és egy koppintásos „megnézve” gombbal; „Hamarosan” (követett sorozatok részei 14 napra); ajánlások a kiválasztott szolgáltatóidon; népszerű sorozatok. „ÚJ” jelölés az utolsó látogatás óta megjelent részeken. |
-| **Nézd most** | Kb. 3 800 közkincs film és régi tévésorozat az Internet Archive-ból, beépített videólejátszóval. Műfaj szerinti szűrés, keresés, lapozás. Ingyenes magyar források (Médiaklikk, RTL+, TV2 Play, Filmio) linkjei. |
-| **Érkezik** | Követett sorozatok következő részei napokra bontva; új sorozatok és évadok premierjei 7 napra; magyarországi mozibemutatók (TMDB); a mai streaming- és magyar tévéműsor. |
-| **Keresés** | Élő keresés a TVmaze adatbázisában, borítóképes találatokkal. |
-| **Listám** | Követett sorozatok csoportosítva (folyamatban / nem kezdted el / naprakész), haladásjelzővel. **Értékeléseim**: 1–5 csillagos saját értékelések rangsora, típus szerinti szűréssel, értékelés vagy dátum szerinti rendezéssel. |
-| **Adatlap** | Sorozat: évadok és epizódok kipipálása, „egész évad megnézve”, helyi (magyar/német) cím, beágyazott előzetes, saját értékelés, „Hol nézhető?” panel. Film: lejátszó vagy előzetes, értékelés. |
-| **Beállítások** | Nyelv (HU/EN/DE); mód (rendszer/világos/sötét), 6 kiemelőszín, OLED-fekete háttér, szövegméret; előfizetett szolgáltatók; értesítések új részekről; saját TMDB-kulcs. |
+| **Nézd most** | Három rész. *Ingyen, legálisan*: új és népszerű filmek, sorozatok, amelyek Magyarországon most ingyen (néhol reklámmal) nézhetők a szolgáltatójuknál; szűrők: típus, műfaj, megjelenés éve, reklám, rendezés (TMDB-kulccsal). *Modern, szabad*: ellenőrzött listából modern, színes, Creative Commons licencű filmek az appon belüli lejátszóval. *Klasszikusok*: kb. 3 800 közkincs film; szűrők: műfaj, nyelv, évtized, rendezés, plusz keresés. Ingyenes magyar források linkjei. |
+| **Érkezik** | Követett sorozatok következő részei napokra bontva; új sorozatok és évadok premierjei 7 napra (szűrők: hol – streaming / amerikai TV / magyar TV / az előfizetéseim –, műfaj); magyarországi mozibemutatók (TMDB; szűrők: műfaj, rendezés); a mai streaming- és magyar tévéműsor. |
+| **Keresés** | *Sorozatok*: élő keresés a TVmaze adatbázisában (szűrők: állapot, indulás éve, az előfizetéseim, rendezés). *Filmek*: keresés kulcs nélkül, a Wikipédiából és a Wikidatából, magyar vagy eredeti címmel (szűrők: megjelenés éve, rendezés). |
+| **Listám** | *Sorozataim*: csoportosítva, haladásjelzővel; szűrők: állapot, az előfizetéseim, rendezés. *Filmjeim*: megnézendő és megnézett filmek, egy koppintással átjelölhetők; szűrés arra, ami az előfizetéseiden elérhető (TMDB-kulccsal). *Értékeléseim*: 1–5 csillagos rangsor; szűrők: típus, legalább hány csillag, rendezés. *Statisztika*: megnézett részek és filmek, nézési idő, végignézett sorozatok, átlagos értékelés, havi nézési idő oszlopdiagramon (táblázatként is), kedvenc műfajok, legtöbbet nézett sorozatok. |
+| **Adatlap** | Sorozat: évadok és epizódok kipipálása, „egész évad megnézve”, helyi (magyar/német) cím, beágyazott előzetes, saját értékelés, „Hol nézhető?”. Film: megnézendő / megnéztem gomb, saját értékelés, leírás, rendező, műfaj, előzetes. A „Hol nézhető?” TMDB-kulccsal a pontos magyarországi szolgáltatókat mutatja (előfizetéssel / ingyen / reklámmal / kölcsönözhető / megvásárolható), és kiemeli a saját előfizetéseidet. |
+| **Beállítások** | Nyelv (HU/EN/DE); mód (rendszer/világos/sötét), 6 kiemelőszín, OLED-fekete háttér, szövegméret; előfizetett szolgáltatók; értesítések új részekről; saját TMDB-kulcs; **mentés fájlba és visszaállítás fájlból** (pl. telefoncseréhez). |
 
 További jellemzők:
 
 - **Telepíthető** a kezdőképernyőre (Android és iOS), saját ikonnal, teljes képernyőn fut.
 - **Offline is indul**: az app váza a Service Worker gyorsítótárából töltődik, a már letöltött adatok elérhetők; internet nélkül figyelmeztető sáv jelenik meg.
 - **Reszponzív**: telefonon alsó menüsáv és teljes képernyős adatlap, 900 px-nél szélesebb kijelzőn (tablet) kétoszlopos elrendezés.
+- **Szűrők** minden listán: kompakt legördülő választók, az aktív szűrő kiemelve, „Alaphelyzet” gombbal; a beállított szűrőket az app megjegyzi.
 - **Értesítések**: a háttérben futó ellenőrzés (Periodic Background Sync) új részt jelez a követett sorozatokból, ahol a platform támogatja.
 
 ## 3. Technikai megoldások
@@ -44,7 +45,8 @@ További jellemzők:
 - **Böngésző API-k:** Fetch API, Service Worker és Cache Storage (offline működés), Web App Manifest, Notifications API és Periodic Background Sync, localStorage, History API (vissza gomb kezelése), `matchMedia` (sötét mód, tablet nézet), `Intl` dátumformázás.
 - **Külső adatforrások (nyilvános API-k):**
   - [TVmaze](https://www.tvmaze.com/api): sorozatok, epizódok, műsorrend, helyi címek;
-  - [TMDB](https://developer.themoviedb.org/): mozibemutatók, előzetesek (saját, ingyenes kulccsal);
+  - [Wikipédia](https://www.mediawiki.org/wiki/API:Main_page) és [Wikidata](https://www.wikidata.org/wiki/Wikidata:Data_access): filmek keresése és adatai, kulcs nélkül;
+  - [TMDB](https://developer.themoviedb.org/): mozibemutatók, előzetesek, pontos szolgáltatók és az ingyen nézhető címek (saját, ingyenes kulccsal; a szolgáltató-adatok a JustWatch-tól származnak);
   - [Internet Archive](https://archive.org/developers/): közkincs filmek keresése és lejátszása;
   - YouTube (`youtube-nocookie.com`): az előzetesek beágyazott lejátszása.
 - **Gyorsítótárazás:** minden API-válasz lecsupaszítva, lejárati idővel kerül a localStorage-ba; hálózati hiba esetén a régi adat jelenik meg. Ha a tárhely megtelik, az app csak a gyorsítótárat üríti, a felhasználó adatait nem.
@@ -70,16 +72,21 @@ js/
   services.js            streaming-szolgáltatók, Service Worker adatai
   api.js                 gyorsítótárazó fetch-réteg, TVmaze-hívások
   helpers.js             dátumok, haladás számítása, követés és megnézve-jelölés
-  trailers.js            TMDB-hívások, beágyazott előzetesek
+  filters.js             újrahasznosítható szűrősáv, a szűrők megjegyzése
+  trailers.js            beágyazott előzetesek
+  providers.js           pontos magyarországi szolgáltatók (TMDB watch providers)
+  films.js               filmkövetés: Wikipédia/Wikidata keresés, film-adatlap, megnézendő/megnézve
+  backup.js              mentés JSON-fájlba és visszaállítás
   events.js              kattintás-, előzmény- és hibakezelés, offline jelzés
   main.js                indulás
   views/
     shell.js             fülváltás, közös UI-elemek
     home.js              Kezdőlap
-    watch.js             Nézd most (Internet Archive lejátszó)
+    watch.js             Nézd most (ingyen legálisan, szabad licencű és közkincs filmek, lejátszó)
     upcoming.js          Érkezik
     search.js            Keresés
-    library.js           Listám és Értékeléseim
+    library.js           Listám: Sorozataim, Filmjeim, Értékeléseim
+    stats.js             Statisztika
     detail.js            sorozat-adatlap, kétoszlopos nézet, navigáció
     movie.js             mozifilm-adatlap
     settings.js          Beállítások
@@ -109,22 +116,25 @@ node serve.js
 
 Ezután böngészőben: **http://localhost:5173**. Telefonméretű nézethez a fejlesztői eszközökben kapcsold be az eszköz-emulációt. Ha nincs Node.js, bármilyen statikus szerver megfelel (pl. `python -m http.server 5173`). A fájlt közvetlenül (`file://`) megnyitva a Service Worker nem működik.
 
-### C) Opcionális: TMDB-kulcs (előzetesek és mozibemutatók)
+### C) Opcionális: TMDB-kulcs (előzetesek, mozibemutatók, pontos szolgáltatók, ingyen nézhető címek)
 
 1. Ingyenes regisztráció: https://www.themoviedb.org/signup
 2. Profil → Beállítások → API → kulcs igénylése (Developer, személyes használat).
 3. Az appban: Beállítások → *Előzetesek és mozifilmek* → illeszd be az „API Read Access Token” értéket → *Mentés* (az app ellenőrzi a kulcsot).
 
-Kulcs nélkül minden más funkció működik; az előzetesnél ilyenkor YouTube-keresés link jelenik meg.
+Kulcs nélkül minden más működik, a filmkeresés és -követés is. Ilyenkor az előzetesnél YouTube-keresés link jelenik meg, a „Hol nézhető?” pedig a JustWatch-ra és az eredeti csatorna alapján becsült szolgáltatóra támaszkodik.
 
 ## 5. Ismert hibák és korlátok
 
-- **Szolgáltató-egyezés becslés:** azt, hogy egy sorozat benne van-e az előfizetésedben, az eredeti csatorna alapján becsüli az app (pl. HBO → HBO Max). Magyarországon egy cím néha máshol fut; a pontos információt a JustWatch-link adja.
+- **Szolgáltatók kulcs nélkül:** TMDB-kulcs nélkül az app az eredeti csatorna alapján becsüli, melyik szolgáltatónál fut egy sorozat (pl. HBO → HBO Max); ez Magyarországon nem mindig pontos. Kulccsal a pontos lista jelenik meg.
+- **Ingyen nézhető címek:** a friss filmek és sorozatok a szolgáltató saját oldalán vagy appjában indulnak; az appon belül csak a közkincs és a szabad licencű filmek játszhatók le.
+- **Filmkeresés:** a Wikipédia keresőjére épül, ezért a nagyon rövid vagy gyakori szavakból álló címeknél a találat nem mindig az első helyen van; a megjelenési év a Wikidata legkorábbi dátuma (fesztiválbemutató is lehet).
 - **RTL+ és TV2 Play keresés:** ezek az oldalak nem fogadják el a keresőszót linkben, ezért csak a keresőjük nyílik meg, a címet be kell gépelni.
 - **Háttér-értesítések:** csak Androidon, Chrome-ban, telepített appal működnek, és a rendszer dönti el, milyen gyakran fut az ellenőrzés (általában naponta). iOS-en és más böngészőkben az új részeket az app megnyitásakor jelzi („ÚJ” jelölés és üzenet).
-- **Közkincs filmek:** többnyire régi, angol nyelvű filmek. Felirat nem jeleníthető meg, mert az Internet Archive nem engedi a feliratfájlok közvetlen betöltését más oldalról. Néhány tételnek már nincs lejátszható változata (erről üzenet jelenik meg).
+- **Közkincs filmek:** többnyire régi, angol nyelvű filmek; a szabad licencű modern filmek listája kicsi (11 film), mert az Internet Archive licenc-jelölése nem megbízható, ezért kézzel ellenőrzött címek kerültek bele. Felirat nem jeleníthető meg, mert az Internet Archive nem engedi a feliratfájlok közvetlen betöltését más oldalról. Néhány tételnek már nincs lejátszható változata (erről üzenet jelenik meg).
 - **Leírások nyelve:** a TVmaze sorozatleírásai többnyire angolok, ezeket az app nem fordítja.
-- **Adatok tárolása:** a lista, a megnézett részek és az értékelések csak az adott eszközön vannak (localStorage). Nincs szinkronizálás, és a böngészőadatok törlése ezeket is törli.
+- **Adatok tárolása:** a lista, a filmek, a megnézett részek és az értékelések csak az adott eszközön vannak (localStorage). Nincs automatikus szinkronizálás; telefoncseréhez a Beállításokban fájlba menthetők és visszatölthetők.
+- **Statisztika:** a havi bontás a jelen verzió óta rögzített jelölésekből készül; a korábban kipipált részek dátuma nem ismert, ezek csak az összesítésben szerepelnek.
 - **Magyar tévéműsor:** a TVmaze-ben a magyar csatornák műsora hiányos, ezért a „Ma: magyar TV” nézet gyakran csak néhány címet mutat.
 
 ## 6. Jövőbeli fejlesztési lehetőségek
@@ -133,7 +143,6 @@ Kulcs nélkül minden más funkció működik; az előzetesnél ilyenkor YouTube
 - **Felhős szinkronizálás** több eszköz között (pl. Firebase vagy saját API).
 - **Szerveroldali push-értesítések** (Web Push), hogy iOS-en is működjenek a háttér-értesítések.
 - **Natív csomagolás** Capacitorral (Android APK / iOS app), áruházi terjesztéshez.
-- **Pontos szolgáltató-adatok** egy streaming-elérhetőségi API-val (pl. TMDB „watch providers”).
 - **Feliratok** egy kis proxyn keresztül a közkincs filmekhez.
 - **Automatikus tesztek** (pl. Playwright) és ES-modulokra épülő build.
 
@@ -143,12 +152,14 @@ Kulcs nélkül minden más funkció működik; az előzetesnél ilyenkor YouTube
 2. **Keresés:** sorozat keresése, adatlap megnyitása, *Listára teszem*.
 3. **Haladás követése:** néhány rész kipipálása, *Egész évad megnézve*; a Kezdőlapon megjelenik a „Folytasd” sor a következő résszel.
 4. **Értékelés:** csillagok az adatlapon → *Listám → Értékeléseim* rangsor.
-5. **Nézd most:** műfaj kiválasztása, egy klasszikus film elindítása az appon belül.
-6. **Érkezik:** premierek és mozibemutatók, egy előzetes lejátszása.
-7. **Beállítások:** nyelvváltás angolra vagy németre, sötét mód, kiemelőszín, OLED: azonnal látszik a változás.
-8. **Tablet nézet:** a böngészőablak szélesítése, kétoszlopos elrendezés.
-9. **Offline:** repülő üzemmódban is elindul, figyelmeztető sávval.
+5. **Nézd most:** *Ingyen, legálisan* szűrőkkel (pl. sorozatok, 2020 után), egy cím szolgáltatója; *Modern, szabad* film elindítása az appon belül.
+6. **Filmek:** Keresés → Filmek → „Dűne” → *Megnézendő*, majd *Listám → Filmjeim* és *Statisztika*.
+7. **Érkezik:** premierek és mozibemutatók, egy előzetes lejátszása.
+8. **Beállítások:** nyelvváltás angolra vagy németre, sötét mód, kiemelőszín, OLED: azonnal látszik a változás.
+9. **Tablet nézet:** a böngészőablak szélesítése, kétoszlopos elrendezés.
+10. **Mentés:** Beállítások → *Mentés fájlba*.
+11. **Offline:** repülő üzemmódban is elindul, figyelmeztető sávval.
 
 ## 8. Adatforrások és jogok
 
-Sorozatadatok: TVmaze (CC BY-SA). Film- és előzetes-adatok: TMDB („This product uses the TMDB API but is not endorsed or certified by TMDB.”). Lejátszható filmek: Internet Archive, kizárólag közkincs (public domain) licencű tételek. Az app saját tartalmat nem tárol és nem terjeszt.
+Sorozatadatok: TVmaze (CC BY-SA). Film- és előzetes-adatok: TMDB („This product uses the TMDB API but is not endorsed or certified by TMDB.”). Filmadatok kulcs nélkül: Wikipédia és Wikidata (CC BY-SA / CC0). Szolgáltató-adatok: JustWatch, a TMDB-n keresztül. Lejátszható filmek: Internet Archive, kizárólag közkincs (public domain) és kézzel ellenőrzött, Creative Commons licencű tételek. Az app saját tartalmat nem tárol és nem terjeszt.

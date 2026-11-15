@@ -56,7 +56,8 @@ function toggleFollow(show) {
 }
 async function setWatched(sid, eids, on) {
   const m = state.watched[sid] || (state.watched[sid] = {});
-  eids.forEach(id => on ? (m[id] = 1) : delete m[id]);
+  const now = Date.now(); // the time is kept for the statistics (older marks are stored as 1)
+  eids.forEach(id => on ? (m[id] = m[id] || now) : delete m[id]);
   if (!Object.keys(m).length) delete state.watched[sid];
   if (on && !state.follows[sid]) {
     const s = await getShow(sid).catch(() => null);

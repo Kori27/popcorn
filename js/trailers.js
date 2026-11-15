@@ -7,9 +7,7 @@ function pickTrailer(results) {
   return (results || []).filter(v => v.site === 'YouTube').sort((a, b) => score(b) - score(a))[0] || null;
 }
 async function trailerForShow(s) {
-  let id = null;
-  if (s.imdb) id = (await tmdb(`/find/${s.imdb}?external_source=imdb_id`, 7 * DAY)).tv_results?.[0]?.id;
-  if (!id) id = (await tmdb(`/search/tv?query=${encodeURIComponent(s.name)}${s.premiered ? '&first_air_date_year=' + s.premiered.slice(0, 4) : ''}`, 7 * DAY)).results?.[0]?.id;
+  const id = await tmdbTvId(s);
   if (!id) return null;
   return pickTrailer((await tmdb(`/tv/${id}/videos?language=${TLANG()}&include_video_language=${state.lang},en,null`)).results);
 }

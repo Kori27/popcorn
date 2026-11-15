@@ -1,9 +1,9 @@
 // Sorozatnapló service worker: keeps the app shell available offline and,
 // where the browser supports Periodic Background Sync, checks followed series for new episodes.
 // Series data is cached by the page itself (localStorage), so API calls pass straight through.
-const CACHE = 'sorozatnaplo-v5';
+const CACHE = 'sorozatnaplo-v6';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
-  'css/app.css', 'js/core.js', 'js/i18n.js', 'js/storage.js', 'js/theme.js', 'js/services.js', 'js/api.js', 'js/helpers.js', 'js/views/shell.js', 'js/views/home.js', 'js/views/search.js', 'js/views/upcoming.js', 'js/trailers.js', 'js/views/movie.js', 'js/views/watch.js', 'js/views/library.js', 'js/views/detail.js', 'js/views/settings.js', 'js/events.js', 'js/main.js'];
+  'css/app.css', 'js/core.js', 'js/i18n.js', 'js/storage.js', 'js/theme.js', 'js/services.js', 'js/api.js', 'js/helpers.js', 'js/filters.js', 'js/views/shell.js', 'js/views/home.js', 'js/views/search.js', 'js/views/upcoming.js', 'js/trailers.js', 'js/providers.js', 'js/films.js', 'js/views/movie.js', 'js/views/watch.js', 'js/views/library.js', 'js/views/stats.js', 'js/views/detail.js', 'js/views/settings.js', 'js/backup.js', 'js/events.js', 'js/main.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

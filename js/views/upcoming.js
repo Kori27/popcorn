@@ -8,11 +8,18 @@ async function renderUpcoming(v, alive) {
   const box = $('#cal');
   try {
     if (calSeg === 'series') {
-      const items = await premieres();
+      const all = await premieres();
       if (!alive()) return;
-      box.innerHTML = items.length
+      if (!all.length) { box.innerHTML = `<div class="empty"><h3>${tr('Nincs bejelentett premier')}</h3><p>${tr('A következő 7 napra most nincs adat.')}</p></div>`; return; }
+      const where = fget('upWhere', 'all'), genre = fget('upGenre', '');
+      const genres = [...new Set(all.flatMap(x => x.show.genres || []))].sort((a, b) => a.localeCompare(b));
+      const items = all.filter(x => (where === 'all' || (where === 'mine' ? !!mine(x.show) : x.src === where)) && (!genre || (x.show.genres || []).includes(genre)));
+      const bar = filterBar('upcoming', [
+        { id: 'upWhere', label: 'Hol', def: 'all', options: [['all', 'Mindenhol'], ['web', 'Streaming'], ['US', 'Amerikai TV'], ['HU', 'Magyar TV'], ...(state.services.length ? [['mine', 'Az előfizetéseimen']] : [])] },
+        { id: 'upGenre', label: 'Műfaj', def: '', options: [['', 'Mind'], ...genres.map(g => [g, g])] }]);
+      box.innerHTML = bar + (items.length
         ? `<p class="note">${tr('Új sorozatok és új évadok első részei a következő 7 napban: streaming, amerikai és magyar csatornák. {n} cím.', { n: items.length })}</p>` + groupByDay(items, false, true)
-        : `<div class="empty"><h3>${tr('Nincs bejelentett premier')}</h3><p>${tr('A következő 7 napra most nincs adat.')}</p></div>`;
+        : noMatch());
       return;
     }
     if (calSeg === 'movies') { await renderMovies(box, alive); return; }
@@ -46,7 +53,8 @@ async function premieres() {
   const days = Array.from({ length: 7 }, (_, i) => addDays(today(), i));
   const paths = days.flatMap(d => [`/schedule/web?date=${d}`, `/schedule?country=US&date=${d}`, `/schedule?country=HU&date=${d}`]);
   const lists = await pool(paths, 4, p => api(p, 6 * H, a => a.filter(x => x.number === 1)
-    .map(x => ({ show: slimShow(x._embedded?.show || x.show), ep: slimEp(x) }))).catch(() => []));
+    .map(x => ({ show: slimShow(x._embedded?.show || x.show), ep: slimEp(x) })))
+    .then(l => (l || []).map(x => ({ ...x, src: p.includes('/web') ? 'web' : p.includes('=HU') ? 'HU' : 'US' }))).catch(() => []));
   const best = new Map();
   lists.flat().forEach(it => {
     if (!it.show || !it.ep.date) return;
@@ -89,12 +97,25 @@ async function renderMovies(box, alive) {
     const pages = await Promise.all([1, 2, 3].map(p => tmdb(`/movie/upcoming?language=${TLANG()}&region=HU&page=${p}`, 12 * H).catch(() => ({ results: [] }))));
     if (!alive()) return;
     const t = today(), seen = new Set();
-    const movies = pages.flatMap(p => p.results || []).filter(m => m.release_date >= t && !seen.has(m.id) && seen.add(m.id))
+    const genreList = await tmdbGenres('movie');
+    if (!alive()) return;
+    const genre = fget('cinGenre', ''), sort = fget('cinSort', 'date');
+    const allMovies = pages.flatMap(p => p.results || []).filter(m => m.release_date >= t && !seen.has(m.id) && seen.add(m.id));
+    const movies = allMovies.filter(m => !genre || (m.genre_ids || []).includes(+genre))
       .sort((a, b) => a.release_date.localeCompare(b.release_date) || b.popularity - a.popularity);
+    const bar = filterBar('upcoming', [
+      { id: 'cinGenre', label: 'Műfaj', def: '', options: [['', 'Mind'], ...genreList.filter(g => allMovies.some(m => (m.genre_ids || []).includes(g.id))).map(g => [String(g.id), g.name])] },
+      { id: 'cinSort', label: 'Rendezés', def: 'date', options: [['date', 'Bemutató szerint'], ['popular', 'Népszerűség']] }]);
+    if (allMovies.length && !movies.length) { box.innerHTML = bar + noMatch(); return; }
+    if (movies.length && sort === 'popular') {
+      box.innerHTML = bar + `<div class="grid">${movies.slice().sort((a, b) => b.popularity - a.popularity)
+        .map(m => tmdbCard(m, 'movie').replace(/<span class="meta">[^<]*<\/span><\/button>$/, `<span class="meta">${esc(tr('Mozi'))} · ${esc(relDays(m.release_date))}</span></button>`)).join('')}</div>`;
+      return;
+    }
     if (!movies.length) { box.innerHTML = `<div class="empty"><h3>${tr('Nincs bejelentett bemutató')}</h3><p>${tr('A következő hetekre most nincs adat a magyar mozibemutatókról.')}</p></div>`; return; }
     const days = new Map();
     movies.forEach(m => { if (!days.has(m.release_date)) days.set(m.release_date, []); days.get(m.release_date).push(m); });
-    box.innerHTML = `<p class="note">${tr('Magyarországi mozibemutatók. Koppints egy filmre az előzetesért.')}</p>` + [...days].map(([d, arr]) => `<div class="day"><h3><b>${dayLabel(d)}</b> · ${fmtDate(d)}</h3><div class="list">
+    box.innerHTML = bar + `<p class="note">${tr('Magyarországi mozibemutatók. Koppints egy filmre az előzetesért.')}</p>` + [...days].map(([d, arr]) => `<div class="day"><h3><b>${dayLabel(d)}</b> · ${fmtDate(d)}</h3><div class="list">
       ${arr.map(m => `<div class="row" data-movie="${m.id}">
         ${m.poster_path ? `<img class="thumb" src="${TIMG}w154${esc(m.poster_path)}" alt="" loading="lazy">` : '<div class="thumb"></div>'}
         <div class="body"><div class="t1">${esc(m.title)}</div>
