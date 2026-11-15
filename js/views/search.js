@@ -16,11 +16,12 @@ const inDecade = (year, dec) => {
 
 function renderSearch(v, alive) {
   const film = searchKind === 'film';
+  const isVideaSearch = typeof videa !== 'undefined' && !!videa;
   v.innerHTML = `<div class="seg" role="group" aria-label="${tr('Keresés')}">${[['tv', 'Sorozatok'], ['film', 'Filmek']].map(([k, l]) => `<button data-skind="${k}" aria-pressed="${searchKind === k}">${tr(l)}</button>`).join('')}</div>
     <div class="search">${ICON.search}
-    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr(film ? 'Film címe, pl. Eredet' : videa ? 'Videa-videó keresése' : 'Sorozat címe, pl. Severance')}" value="${esc(searchQ)}" aria-label="${tr(film ? 'Film keresése' : 'Sorozat keresése')}">
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr(film ? 'Film címe, pl. Eredet' : isVideaSearch ? 'Videa-videó keresése' : 'Sorozat címe, pl. Severance')}" value="${esc(searchQ)}" aria-label="${tr(film ? 'Film keresése' : 'Sorozat keresése')}">
     <button class="clear" id="qclear" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
-    ${videa ? '' : film ? filterBar('search', [
+    ${isVideaSearch ? '' : film ? filterBar('search', [
         { id: 'sfDecade', label: 'Megjelenés éve', def: '', options: SEARCH_DECADES },
         { id: 'sfFilmSort', label: 'Rendezés', def: 'rel', options: [['rel', 'Relevancia'], ['new', 'Legújabb'], ['old', 'Legrégebbi']] }])
       : filterBar('search', [

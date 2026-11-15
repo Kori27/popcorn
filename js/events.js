@@ -38,7 +38,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key],[data-currently-watching]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key],[data-currently-watching],[data-picker]');
   if (!t) return;
   if (t.dataset.fav) { e.stopPropagation(); toggleFav(t.dataset.fav); return; }
   if (t.dataset.videaFav) { e.stopPropagation(); toggleVideaFav(t.dataset.videaFav); return; }
@@ -70,6 +70,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.accent) { setAppearance('accent', t.dataset.accent); return; }
   if (t.dataset.size) { setAppearance('size', t.dataset.size); return; }
   if (t.hasAttribute('data-oled')) { setAppearance('oled'); return; }
+  if (t.hasAttribute('data-picker')) { if ($('#sheet').hidden) openPicker(); return; }
   if (t.dataset.tab) { if (t.dataset.skindgo) searchKind = t.dataset.skindgo; if (t.dataset.tab === 'search' && searchKind === 'videa') searchKind = 'tv'; if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
   if (t.hasAttribute('data-close')) { clearInterval(videaProgressTimer); sheetOpen() ? history.back() : closeShow(); return; }
