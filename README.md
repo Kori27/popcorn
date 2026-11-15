@@ -220,3 +220,9 @@ A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már 
 
 - A sorozatok és filmek adatlapján a **♥ Kedvencnek jelölöm** gombbal kedvencet jelölhetsz. A lista a **Listám → Kedvenceim** alatt van, és a fiókkal szinkronizálódik, illetve a mentésbe is bekerül.
 - A Kezdőlap **Ez is érdekelhet** sora a kedvencek műfajai alapján ajánl (a legújabb kedvenc számít a legtöbbet). Kulccsal a filmekhez a TMDB saját „hasonló filmek” listáját is használja. A kártyán ♥ jelzi, melyik kedvenced miatt kaptad az ajánlást. A már követett, megnézett vagy kedvelt címeket kihagyja.
+
+## 13. Videa (hivatalos API)
+
+- A **Keresés → Videa** fül a Videa hivatalos OpenAPI-ján keres, a találat a Videa saját beágyazott lejátszójában indul (`#videa-<kód>`).
+- Kell hozzá egy **OpenAPI-** és egy **PlayerAPI-kulcs** a Videától, a kori27.github.io webhelyre engedélyezve. A kulcsokat a **Beállítások → Videa** panelen kell megadni. Csak az adott eszközön tárolódnak, a fiókba és a mentésbe nem kerülnek.
+- Hogy egy videó elérhető-e és beágyazható-e, azt a Videa és a feltöltő dönti el.

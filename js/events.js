@@ -3,9 +3,11 @@
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-key]');
   if (!t) return;
   if (t.dataset.fav) { e.stopPropagation(); toggleFav(t.dataset.fav); return; }
+  if (t.dataset.videa) { playVidea(t.dataset.videa); return; }
+  if (t.dataset.videaKey) { saveVideaKey(t.dataset.videaKey); return; }
   if (t.dataset.yt) { playYouTube(t); return; }
   if (t.dataset.film) { openFilm(t.dataset.film); return; }
   if (t.dataset.movie) { openMovie(+t.dataset.movie); return; }
@@ -71,6 +73,7 @@ window.addEventListener('popstate', () => {
   if (m) openShow(+m[1], false);
   else if (wf) openWikiFilm(wf[1], false);
   else if (location.hash === '#mit-nezzek') openPicker(false);
+  else if (/^#videa-[A-Za-z0-9]{16}$/.test(location.hash)) playVidea(location.hash.slice(7), false);
   else if (f) openFilm(decodeURIComponent(f[1]), false);
   else if (mv) openMovie(+mv[1], false);
   else if (location.hash === '#beallitasok') openSettings(false);

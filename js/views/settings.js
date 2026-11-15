@@ -36,6 +36,13 @@ async function renderSettings() {
       <div class="field"><input id="tmdbKey" type="password" autocomplete="off" spellcheck="false" placeholder="${tr('API Key vagy API Read Access Token')}" value="${esc(state.tmdb || '')}" aria-label="${tr('TMDB-kulcs')}">
         <button class="btn primary" data-tmdb="save">${tr('Mentés')}</button>${tmdbKey() ? `<button class="btn ghost" data-tmdb="clear">${tr('Törlés')}</button>` : ''}</div>
       <p id="tmdbMsg" aria-live="polite"></p></div>
+    <div class="panel"><h3>${tr('Videa – keresés és lejátszó')}</h3>
+      <p>${tr('A Videa OpenAPI-kulccsal kereshetsz videókat, a PlayerAPI-kulccsal pedig vezérelheted a hivatalos beágyazott lejátszót. A kulcsok csak ezen az eszközön tárolódnak, nem kerülnek a fiókodba és a mentésbe.')}</p>
+      <div class="field"><input id="videaOpenKey" type="password" autocomplete="off" spellcheck="false" placeholder="${tr('Videa OpenAPI-kulcs')}" value="${esc(state.videaOpenKey)}" aria-label="${tr('Videa OpenAPI-kulcs')}"><button class="btn primary" data-videa-key="open">${tr('Mentés')}</button></div>
+      <div class="field"><input id="videaPlayerKey" type="password" autocomplete="off" spellcheck="false" placeholder="${tr('Videa PlayerAPI-kulcs')}" value="${esc(state.videaPlayerKey)}" aria-label="${tr('Videa PlayerAPI-kulcs')}"><button class="btn primary" data-videa-key="player">${tr('Mentés')}</button></div>
+      ${state.videaOpenKey || state.videaPlayerKey ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-videa-key="clear">${tr('Videa-kulcsok törlése')}</button></div>` : ''}
+      <p class="note">${tr('Engedélyezett webhely: {site}. A kulcs a böngészőből kiolvasható, ezért csak ehhez a webhelyhez engedélyezd.', { site: 'https://kori27.github.io' })}</p>
+      <p id="videaKeyMsg" aria-live="polite"></p></div>
     ${backupPanel()}
     </div>`;
 }

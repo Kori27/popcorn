@@ -46,6 +46,7 @@ const m0 = location.hash.match(/^#sorozat-(\d+)$/);
 if (m0) { history.replaceState(null, '', location.pathname); history.pushState({ show: +m0[1] }, '', '#sorozat-' + m0[1]); openShow(+m0[1], false); }
 else if (location.hash === '#beallitasok') { history.replaceState(null, '', location.pathname); openSettings(); }
 else if (/^#film-.+/.test(location.hash)) { const id = decodeURIComponent(location.hash.slice(6)); history.replaceState(null, '', location.pathname); openFilm(id); }
+else if (/^#videa-[A-Za-z0-9]{16}$/.test(location.hash)) { const id = location.hash.slice(7); history.replaceState(null, '', location.pathname); playVidea(id); }
 else if (location.hash === '#mit-nezzek') { history.replaceState(null, '', location.pathname); openPicker(); }
 else if (/^#wfilm-Q\d+$/.test(location.hash)) { const id = location.hash.slice(7); history.replaceState(null, '', location.pathname); openWikiFilm(id); }
 else if (/^#mozi-\d+$/.test(location.hash)) { const id = +location.hash.slice(6); history.replaceState(null, '', location.pathname); openMovie(id); }
