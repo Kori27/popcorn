@@ -220,3 +220,13 @@ A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már 
 
 - A sorozatok és filmek adatlapján a **♥ Kedvencnek jelölöm** gombbal kedvencet jelölhetsz. A lista a **Listám → Kedvenceim** alatt van, és a fiókkal szinkronizálódik, illetve a mentésbe is bekerül.
 - A Kezdőlap **Ez is érdekelhet** sora a kedvencek műfajai alapján ajánl (a legújabb kedvenc számít a legtöbbet). Kulccsal a filmekhez a TMDB saját „hasonló filmek” listáját is használja. A kártyán ♥ jelzi, melyik kedvenced miatt kaptad az ajánlást. A már követett, megnézett vagy kedvelt címeket kihagyja.
+
+
+## 2026. november – Videa-lejátszó javítás (v33)
+
+- A Videa hivatalos beágyazott lejátszója már a PlayerAPI betöltésétől függetlenül jelenik meg.
+- A PlayerAPI opcionális vezérlőréteg; a betöltési vagy kulcshiba nem akadályozza meg a videó beágyazását.
+- A lejátszó iframe-jét az OpenAPI által visszaadott hivatalos oEmbed HTML-ből olvassuk ki, és ellenőrizzük a Videa-domain címet.
+- Részletesebb hibaüzenet jelenik meg, ha nincs beágyazó kód vagy a PlayerAPI nem válaszol.
+
+Megjegyzés: a Videa vagy a feltöltő által letiltott videók beágyazását ez a javítás nem kerüli meg.

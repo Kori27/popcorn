@@ -39,13 +39,23 @@ function loadVideaPlayerAPI() {
   if (window.VIDEA?.VideaPlayer) return Promise.resolve();
   if (videaPlayerApiReady) return videaPlayerApiReady;
   const key = (state.videaPlayerKey || '').trim();
-  if (!key) return Promise.reject(new Error('Hiányzik a Videa PlayerAPI-kulcs. A Beállításokban add meg.'));
+  if (!key) return Promise.reject(new Error('Hiányzik a Videa PlayerAPI-kulcs.'));
   videaPlayerApiReady = new Promise((resolve, reject) => {
     const callback = '__popcornVideaPlayerReady';
-    window[callback] = () => { delete window[callback]; resolve(); };
+    let settled = false;
+    const finish = (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      delete window[callback];
+      if (err) { videaPlayerApiReady = null; reject(err); }
+      else resolve();
+    };
+    const timer = setTimeout(() => finish(new Error('A Videa PlayerAPI nem válaszolt 15 másodpercen belül. A videó ettől még lejátszható lehet.')), 15000);
+    window[callback] = () => finish();
     const script = document.createElement('script');
     script.src = `https://videa.hu/static/api/player_api_v1.0.3.js?key=${encodeURIComponent(key)}&callback=${callback}`;
-    script.onerror = () => { videaPlayerApiReady = null; reject(new Error('A Videa PlayerAPI nem tölthető be.')); };
+    script.onerror = () => finish(new Error('A Videa PlayerAPI nem tölthető be.'));
     document.head.appendChild(script);
   });
   return videaPlayerApiReady;
@@ -112,33 +122,75 @@ async function getVideaVideo(videoId) {
 
 async function playVidea(videoId) {
   if (!/^[A-Za-z0-9]{16}$/.test(videoId)) { toast('Érvénytelen Videa-videóazonosító.'); return; }
+
+  const sh = $('#sheet');
+  sh.hidden = false;
+  sh.scrollTop = 0;
+  sh.innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Bezárás">${ICON.back}</button></div>
+    <div class="sheet-body"><h2>Videa-videó betöltése…</h2><div class="videa-embed" id="videaEmbed"></div>
+    <p class="note" id="videaPlayerStatus" aria-live="polite">A hivatalos Videa-lejátszó betöltése folyamatban…</p></div>`;
+
   try {
-    const [data] = await Promise.all([getVideaVideo(videoId), loadVideaPlayerAPI()]);
-    const sh = $('#sheet');
-    sh.hidden = false;
-    sh.innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Bezárás">${ICON.back}</button></div>
-      <div class="sheet-body"><h2>${esc(data.title || 'Videa-videó')}</h2>
-      <div id="videaEmbed" class="videa-embed"></div>
-      <p class="note">A hivatalos Videa-lejátszó jelenik meg. A videó elérhetőségét és beágyazhatóságát a Videa, illetve a feltöltő beállításai határozzák meg.</p>
-      </div>`;
-    const embed = data.oembed_data?.html || '';
-    const match = embed.match(/src=["'](https:\/\/videa\.hu\/player\?[^"']+)["']/i);
-    if (!match) throw new Error('A Videa nem adott vissza beágyazható lejátszót ehhez a videóhoz.');
-    const url = new URL(match[1]);
+    // A videó adata és a hivatalos embed az elsődleges. A PlayerAPI nem feltétele a lejátszásnak.
+    const data = await getVideaVideo(videoId);
+    const embedHtml = data?.oembed_data?.html || '';
+    const parsed = new DOMParser().parseFromString(embedHtml, 'text/html');
+    const sourceFrame = parsed.querySelector('iframe');
+    const rawSrc = sourceFrame?.getAttribute('src');
+    if (!rawSrc) throw new Error('A Videa nem adott vissza beágyazható lejátszót ehhez a videóhoz.');
+
+    const url = new URL(rawSrc, 'https://videa.hu/');
+    if (url.hostname !== 'videa.hu' && !url.hostname.endsWith('.videa.hu')) {
+      throw new Error('A Videa visszaadott beágyazó címe nem érvényes Videa-lejátszó.');
+    }
     url.searchParams.set('enableJsApi', '1');
-    url.searchParams.set('apiKey', state.videaPlayerKey);
+    if (state.videaPlayerKey) url.searchParams.set('apiKey', state.videaPlayerKey);
+
     const iframe = document.createElement('iframe');
     iframe.id = 'videa_player_iframe';
     iframe.src = url.toString();
     iframe.title = data.title || 'Videa-lejátszó';
     iframe.allow = 'autoplay; fullscreen; picture-in-picture';
     iframe.allowFullscreen = true;
+    iframe.loading = 'eager';
+    iframe.setAttribute('webkitallowfullscreen', 'webkitallowfullscreen');
+    iframe.setAttribute('mozallowfullscreen', 'mozallowfullscreen');
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     $('#videaEmbed').appendChild(iframe);
-    // Attach PlayerAPI control object to the official embed; native Videa controls remain available.
-    try { new VIDEA.VideaPlayer({ iframeID: 'videa_player_iframe', events: { onKeyError: () => toast('A Videa PlayerAPI-kulcs vagy az engedélyezett webhely nem megfelelő.') } }); } catch {}
+
+    const title = sh.querySelector('h2');
+    if (title) title.textContent = data.title || 'Videa-videó';
+    const status = $('#videaPlayerStatus');
+    if (status) status.textContent = 'A Videa hivatalos lejátszója betöltődik. Ha a feltöltő letiltotta a beágyazást, a videó itt nem lesz lejátszható.';
+
+    // A PlayerAPI csak opcionális vezérlés; hibája nem távolíthatja el és nem akadályozhatja a lejátszót.
+    if (state.videaPlayerKey) {
+      loadVideaPlayerAPI().then(() => {
+        if (!document.getElementById('videa_player_iframe') || !window.VIDEA?.VideaPlayer) return;
+        new VIDEA.VideaPlayer({
+          iframeID: 'videa_player_iframe',
+          events: {
+            onReady: () => {
+              const note = $('#videaPlayerStatus');
+              if (note) note.textContent = 'A Videa-lejátszó készen áll.';
+            },
+            onKeyError: () => {
+              const note = $('#videaPlayerStatus');
+              if (note) note.textContent = 'A PlayerAPI-kulcsot a Videa nem fogadta el. A hivatalos lejátszó ettől még működhet.';
+            }
+          }
+        });
+      }).catch(error => {
+        const note = $('#videaPlayerStatus');
+        if (note) note.textContent = `${error.message} A videó megjelenítése ettől függetlenül megpróbálható.`;
+      });
+    } else if ($('#videaPlayerStatus')) {
+      $('#videaPlayerStatus').textContent = 'A hivatalos lejátszó betöltődik. A PlayerAPI-kulcs opcionális a videó megjelenítéséhez.';
+    }
   } catch (e) {
-    toast(e?.message || 'Nem sikerült megnyitni a Videa-videót.');
+    const body = sh.querySelector('.sheet-body');
+    if (body) body.innerHTML = `<h2>Nem sikerült betölteni a Videa-videót</h2><p class="note">${esc(e?.message || 'Ismeretlen hiba.')}</p>
+      <p><a class="btn ghost" href="https://videa.hu/videok/${encodeURIComponent(videoId)}" target="_blank" rel="noopener noreferrer">Megnyitás a Videán</a></p>`;
   }
 }
 
