@@ -201,3 +201,5 @@ Bejelentkezés után a sorozatlista, a megnézett részek, az értékelések, a 
 Ismert korlát: ha két eszközön egyszerre, internet nélkül módosítasz, a később szinkronizált eszköz változata nyer.
 
 **Ingyenes magyar források:** a Médiaklikk, az RTL+, a TV2 Play és a Filmio külső linkként nyílik. Az RTL+ és a TV2 Play tiltja a beágyazást (`X-Frame-Options: SAMEORIGIN`); a Médiaklikk lejátszója beágyazva nem indul el, a Filmio pedig bejelentkezést kér, ami beágyazott ablakban (harmadik féltől származó sütik, Google-belépés) nem megbízható.
+
+**Új verzió kiadása:** módosítás után futtasd a `node bump-version.js` parancsot. Ez minden CSS- és JS-hivatkozásnak új `?v=` számot ad, és átnevezi a Service Worker gyorsítótárát, így a böngészők biztosan az összetartozó HTML-, CSS- és JS-fájlokat töltik be (a GitHub Pages néhány percig a régi fájlokat is kiszolgálhatja).

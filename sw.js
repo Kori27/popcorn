@@ -1,9 +1,9 @@
 // Popcorn service worker: keeps the app shell available offline and,
 // where the browser supports Periodic Background Sync, checks followed series for new episodes.
 // Series data is cached by the page itself (localStorage), so API calls pass straight through.
-const CACHE = 'popcorn-v16';
+const CACHE = 'popcorn-v17';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
-  'css/app.css', 'js/core.js', 'js/i18n.js', 'js/storage.js', 'js/theme.js', 'js/services.js', 'js/api.js', 'js/helpers.js', 'js/filters.js', 'js/views/shell.js', 'js/views/home.js', 'js/views/search.js', 'js/views/upcoming.js', 'js/trailers.js', 'js/providers.js', 'js/films.js', 'js/views/movie.js', 'js/views/watch.js', 'js/views/library.js', 'js/views/stats.js', 'js/views/detail.js', 'js/views/settings.js', 'js/backup.js', 'js/firebase-config.js', 'js/account.js', 'js/events.js', 'js/main.js'];
+  'css/app.css?v=17', 'js/core.js?v=17', 'js/i18n.js?v=17', 'js/storage.js?v=17', 'js/theme.js?v=17', 'js/services.js?v=17', 'js/api.js?v=17', 'js/helpers.js?v=17', 'js/filters.js?v=17', 'js/views/shell.js?v=17', 'js/views/home.js?v=17', 'js/views/search.js?v=17', 'js/views/upcoming.js?v=17', 'js/trailers.js?v=17', 'js/providers.js?v=17', 'js/films.js?v=17', 'js/views/movie.js?v=17', 'js/views/watch.js?v=17', 'js/views/library.js?v=17', 'js/views/stats.js?v=17', 'js/views/detail.js?v=17', 'js/views/settings.js?v=17', 'js/backup.js?v=17', 'js/firebase-config.js?v=17', 'js/account.js?v=17', 'js/events.js?v=17', 'js/main.js?v=17'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
