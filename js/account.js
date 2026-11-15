@@ -127,6 +127,7 @@ function authErrorText(e) {
     'auth/network-request-failed': 'Nincs internetkapcsolat.',
     'auth/unauthorized-domain': 'Ez az oldal nincs engedélyezve a Firebase-projektben (Authentication → Settings → Authorized domains).',
     'auth/operation-not-allowed': 'Ez a bejelentkezési mód nincs bekapcsolva a Firebase-projektben.',
+    'auth/configuration-not-found': 'Ez a bejelentkezési mód nincs bekapcsolva a Firebase-projektben.',
     'auth/requires-recent-login': 'Biztonsági okból jelentkezz be újra, és utána próbáld meg ismét.',
     'auth/popup-blocked': 'A böngésző letiltotta a felugró ablakot. Engedélyezd, vagy próbáld újra.'
   })[c] || 'A bejelentkezés nem sikerült. Próbáld újra.';
