@@ -57,9 +57,22 @@ async function searchVideaVideos(query, page = 1) {
     throw new Error('A Videa OpenAPI betöltődött, de a keresési funkció nem érhető el. Frissítsd az oldalt, majd próbáld újra.');
   }
   try {
+    // First use Videa's general search endpoint.
     const response = await api.searchVideos(query, page);
     if (!response || !Array.isArray(response.videos)) {
       throw new Error('A Videa API váratlan választ adott. Próbáld újra később.');
+    }
+    if (response.videos.length || typeof api.getTagVideos !== 'function') return response;
+
+    // Videa documents tag browsing separately. Try it as a fallback when
+    // general search returns zero results, since some content is discoverable by tag.
+    try {
+      const tagged = await api.getTagVideos(query, 'upload_date', page);
+      if (tagged && Array.isArray(tagged.videos) && tagged.videos.length) {
+        return { ...tagged, _popcornFallback: 'tag' };
+      }
+    } catch (tagError) {
+      console.warn('Videa tag fallback failed:', tagError);
     }
     return response;
   } catch (error) {
