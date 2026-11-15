@@ -73,7 +73,6 @@ window.addEventListener('popstate', () => {
   if (m) openShow(+m[1], false);
   else if (wf) openWikiFilm(wf[1], false);
   else if (location.hash === '#mit-nezzek') openPicker(false);
-  else if (/^#videa-[A-Za-z0-9]{16}$/.test(location.hash)) playVidea(location.hash.slice(7), false);
   else if (f) openFilm(decodeURIComponent(f[1]), false);
   else if (mv) openMovie(+mv[1], false);
   else if (location.hash === '#beallitasok') openSettings(false);

@@ -57,23 +57,20 @@ async function runSearch(alive) {
   const query = searchQ.trim(), kind = searchKind;
   const stale = () => !alive() || searchQ.trim() !== query || searchKind !== kind;
   if (kind === 'videa') {
-    if (!query) { box.innerHTML = `<div class="empty"><h3>${tr('Videa-keresés')}</h3><p>${tr('Írj be egy címet vagy keresőkifejezést. A találatok a Videa hivatalos OpenAPI-ján keresztül érkeznek.')}</p>${state.videaOpenKey ? '' : `<button class="btn soft" data-settings>${tr('Videa-kulcs megadása')}</button>`}</div>`; return; }
-    box.innerHTML = skelRows(3);
+    if (!query) { box.innerHTML = `<div class="empty"><h3>Videa-keresés</h3><p>Írj be egy címet vagy keresőkifejezést. A találatok a Videa hivatalos OpenAPI-ján keresztül érkeznek.</p></div>`; return; }
+    box.innerHTML = `<p class="note">Videa-találatok betöltése…</p>`;
     try {
       const response = await searchVideaVideos(query, 1);
       if (stale()) return;
-      const { videos, total } = videaResults(response);
-      if (!videos.length) console.info('Videa search answer', response);
-      // nothing recognisable in the answer: show its shape so the parser can be fixed
-      const shape = !videos.length && response && typeof response === 'object' ? JSON.stringify(response).slice(0, 300) : '';
-      box.innerHTML = videos.length ? `<div class="sec-head"><h2>${tr('Videa-találatok')}</h2><span class="count">${tr('{n} találat', { n: total })}</span></div>
-        <div class="grid videa-grid">${videos.map(x => `<button class="card" data-videa="${esc(x.vcode)}" aria-label="${esc(x.title || tr('Videa-videó'))}">
-          ${x.thumbnail ? `<img class="poster wide" src="${esc(x.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph wide">Videa</div>'}
-          <span class="name">${esc(x.title || tr('Névtelen videó'))}</span>
-          <span class="meta">${esc([x.duration, x.channel].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
-        : `<div class="empty"><h3>${tr('Nincs Videa-találat')}</h3><p>${tr('Próbálj másik keresőkifejezést.')}</p>${shape && shape !== '{}' ? `<p class="note" style="word-break:break-all">${tr('A Videa válasza')}: <code>${esc(shape)}</code></p>` : ''}</div>`;
+      const videos = response?.videos || [];
+      box.innerHTML = videos.length ? `<div class="sec-head"><h2>Videa-találatok</h2><span class="count">${Number(response.totalhits || videos.length)} találat</span></div>
+        <div class="grid">${videos.map(v => `<button class="card" data-videa="${esc(v.vcode)}" aria-label="${esc(v.title || 'Videa-videó')}">
+          ${v.thumbnail ? `<img class="poster" src="${esc(v.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
+          <span class="name">${esc(v.title || 'Névtelen videó')}</span>
+          <span class="meta">${esc([v.duration, v.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
+        : `<div class="empty"><h3>Nincs Videa-találat</h3><p>A Videa API sikeres választ adott, de erre a kifejezésre nem küldött videókat. Próbálj rövidebb címet vagy egyetlen kulcsszót.</p><p class="note">Ha több különböző keresésre is nulla találat érkezik, ellenőrizd a Beállításokban az OpenAPI-kulcsot és az OpenAPI-kulcshoz megadott webhelyengedélyt.</p></div>`;
     } catch (err) {
-      if (!stale()) box.innerHTML = `<div class="empty"><h3>${tr('Nem sikerült a Videa-keresés')}</h3><p>${esc(err?.message || tr('Ellenőrizd az API-kulcsokat és a webhelyengedélyt a Beállításokban.'))}</p><button class="btn soft" data-settings>${tr('Beállítások')}</button></div>`;
+      if (!stale()) box.innerHTML = `<div class="empty"><h3>Nem sikerült a Videa-keresés</h3><p>${esc(err?.message || 'Ellenőrizd az OpenAPI-kulcsot és a webhelyengedélyt a Beállításokban.')}</p><p class="note">Fontos: a kereséshez az OpenAPI-kulcs kell. A PlayerAPI-kulcs csak a beágyazott lejátszó vezérlésére szolgál.</p></div>`;
     }
     return;
   }
