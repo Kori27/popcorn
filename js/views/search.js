@@ -62,13 +62,16 @@ async function runSearch(alive) {
     try {
       const response = await searchVideaVideos(query, 1);
       if (stale()) return;
-      const videos = response?.videos || [];
-      box.innerHTML = videos.length ? `<div class="sec-head"><h2>${tr('Videa-találatok')}</h2><span class="count">${tr('{n} találat', { n: Number(response.totalhits || videos.length) })}</span></div>
+      const { videos, total } = videaResults(response);
+      if (!videos.length) console.info('Videa search answer', response);
+      // nothing recognisable in the answer: show its shape so the parser can be fixed
+      const shape = !videos.length && response && typeof response === 'object' ? JSON.stringify(response).slice(0, 300) : '';
+      box.innerHTML = videos.length ? `<div class="sec-head"><h2>${tr('Videa-találatok')}</h2><span class="count">${tr('{n} találat', { n: total })}</span></div>
         <div class="grid videa-grid">${videos.map(x => `<button class="card" data-videa="${esc(x.vcode)}" aria-label="${esc(x.title || tr('Videa-videó'))}">
           ${x.thumbnail ? `<img class="poster wide" src="${esc(x.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph wide">Videa</div>'}
           <span class="name">${esc(x.title || tr('Névtelen videó'))}</span>
-          <span class="meta">${esc([x.duration, x.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
-        : `<div class="empty"><h3>${tr('Nincs Videa-találat')}</h3><p>${tr('Próbálj másik keresőkifejezést.')}</p></div>`;
+          <span class="meta">${esc([x.duration, x.channel].filter(Boolean).join(' · '))}</span></button>`).join('')}</div>`
+        : `<div class="empty"><h3>${tr('Nincs Videa-találat')}</h3><p>${tr('Próbálj másik keresőkifejezést.')}</p>${shape && shape !== '{}' ? `<p class="note" style="word-break:break-all">${tr('A Videa válasza')}: <code>${esc(shape)}</code></p>` : ''}</div>`;
     } catch (err) {
       if (!stale()) box.innerHTML = `<div class="empty"><h3>${tr('Nem sikerült a Videa-keresés')}</h3><p>${esc(err?.message || tr('Ellenőrizd az API-kulcsokat és a webhelyengedélyt a Beállításokban.'))}</p><button class="btn soft" data-settings>${tr('Beállítások')}</button></div>`;
     }

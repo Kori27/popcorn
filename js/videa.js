@@ -19,7 +19,11 @@ function loadVideaOpenAPI() {
     };
     const script = document.createElement('script');
     script.src = `https://videa.hu/static/api/open_api_v1.0.2.js?key=${encodeURIComponent(key)}&callback=${callback}`;
-    script.onerror = () => { videaOpenReady = null; reject(new Error(tr('A Videa OpenAPI nem tölthető be. Ellenőrizd a kulcsot és az engedélyezett webhelyet.'))); };
+    const fail = () => { if (videaOpenApi) return; videaOpenReady = null; script.remove(); reject(new Error(tr('A Videa OpenAPI nem tölthető be. Ellenőrizd a kulcsot és az engedélyezett webhelyet.'))); };
+    script.onerror = fail;
+    // the script loaded but never called back (e.g. Videa answered with an error page): give up and allow a retry
+    script.onload = () => setTimeout(() => { if (!videaOpenApi) fail(); }, 3000);
+    setTimeout(fail, 12000);
     document.head.appendChild(script);
   });
   return videaOpenReady;
@@ -41,14 +45,55 @@ function loadVideaPlayerAPI() {
   return videaPlayerApiReady;
 }
 
+/** Rejects when Videa does not answer in time, so the page never waits forever. */
+const videaTimeout = (p, ms = 15000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(tr('A Videa nem válaszolt időben. Próbáld újra később.'))), ms))]);
+async function videaApi() {
+  const api = await videaTimeout(loadVideaOpenAPI());
+  // the Videa script reads the key at call time: a key changed in Settings works without reloading the page
+  if (window.VIDEA) VIDEA.apiKey = (state.videaOpenKey || '').trim();
+  return api;
+}
 async function searchVideaVideos(query, page = 1) {
-  const api = await loadVideaOpenAPI();
-  return api.searchVideos(query, page);
+  return videaTimeout((await videaApi()).searchVideos(query, page));
+}
+async function getVideaVideo(videoId) {
+  return videaTimeout((await videaApi()).getVideoData(videoId, 0, 576));
 }
 
-async function getVideaVideo(videoId) {
-  const api = await loadVideaOpenAPI();
-  return api.getVideoData(videoId, 0, 576);
+/** The OpenAPI's search answer has no public schema: find the list of videos and the usual field names in it. */
+function videaResults(resp) {
+  const isVideoList = a => Array.isArray(a) && a.length && a.every(x => x && typeof x === 'object') && a.some(x => videaCode(x));
+  const find = (o, depth = 0) => {
+    if (!o || typeof o !== 'object' || depth > 3) return null;
+    if (isVideoList(o)) return o;
+    for (const k of ['videos', 'video', 'items', 'results', 'result', 'data', 'list']) { const r = isVideoList(o[k]) ? o[k] : null; if (r) return r; }
+    for (const v of Object.values(o)) { const r = find(v, depth + 1); if (r) return r; }
+    return null;
+  };
+  const list = find(resp) || [];
+  const total = Number(resp?.totalhits ?? resp?.total ?? resp?.count ?? list.length) || list.length;
+  return { total, videos: list.map(x => ({
+    vcode: videaCode(x),
+    title: x.title || x.name || x.video_title || '',
+    thumbnail: x.thumbnail || x.thumbnail_url || x.thumb || x.image || x.poster || x.thumbnails?.[0]?.url || '',
+    duration: videaDuration(x.duration ?? x.length ?? x.duration_sec),
+    channel: x.channel?.name || x.channel_name || x.channel?.title || (typeof x.channel === 'string' ? x.channel : '') || x.user?.name || ''
+  })).filter(x => x.vcode) };
+}
+function videaCode(x) {
+  for (const v of [x.vcode, x.code, x.video_code, x.id, x.v, x.url, x.link, x.video_url]) {
+    const m = typeof v === 'string' && (v.match(/^[A-Za-z0-9]{16}$/) || v.match(/(?:[-_\/]|v=)([A-Za-z0-9]{16})(?:$|[?&#\/])/));
+    if (m) return m[1] || m[0];
+  }
+  return '';
+}
+function videaDuration(d) {
+  if (d == null || d === '') return '';
+  if (typeof d === 'string' && /:/.test(d)) return d;
+  const s = Math.round(+d);
+  if (!s) return '';
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
 }
 
 async function playVidea(videoId, push = true) {

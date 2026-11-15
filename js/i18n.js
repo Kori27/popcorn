@@ -319,6 +319,7 @@ const I18N_ROWS = [
   ["Videa PlayerAPI-kulcs", "Videa PlayerAPI key", "Videa-PlayerAPI-Schlüssel"],
   ["Videa-kulcsok törlése", "Remove Videa keys", "Videa-Schlüssel löschen"],
   ["Engedélyezett webhely: {site}. A kulcs a böngészőből kiolvasható, ezért csak ehhez a webhelyhez engedélyezd.", "Allowed website: {site}. The key can be read from the browser, so allow it for this website only.", "Erlaubte Website: {site}. Der Schlüssel ist im Browser lesbar, erlaube ihn deshalb nur für diese Website."],
+  ["A Videa nem válaszolt időben. Próbáld újra később.", "Videa did not answer in time. Try again later.", "Videa hat nicht rechtzeitig geantwortet. Versuche es später erneut."], ["A Videa válasza", "Videa’s answer", "Antwort von Videa"],
 ];
 const I18N = { en: {}, de: {} };
 I18N_ROWS.forEach(([hu, en, de]) => { I18N.en[hu] = en; I18N.de[hu] = de; });
