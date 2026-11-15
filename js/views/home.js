@@ -5,7 +5,7 @@
 async function renderHome(v, alive) {
   const ids = Object.keys(state.follows);
   if (!ids.length) {
-    v.innerHTML = `<div id="featured"></div>
+    v.innerHTML = `<div id="featured"></div>${pickerCta()}
       <div class="welcome-panel">
         <span class="welcome-kicker">${tr('A következő kedvenced itt kezdődik')}</span>
         <h2>${tr('Filmek és sorozatok. Egy helyen.')}</h2>
@@ -17,7 +17,7 @@ async function renderHome(v, alive) {
     loadPopular(alive); loadOnMine(alive);
     return;
   }
-  v.innerHTML = `<div id="featured"></div>
+  v.innerHTML = `<div id="featured"></div>${pickerCta()}
     <section><div class="sec-head"><h2>${tr('Folytasd')}</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
     <section><div class="sec-head"><h2>${tr('Hamarosan')}</h2><span class="count">${tr('következő 14 nap')}</span></div><div id="soon">${skelRows(2)}</div></section>
     ${servicesSection()}

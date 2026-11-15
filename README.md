@@ -203,3 +203,15 @@ Ismert korlát: ha két eszközön egyszerre, internet nélkül módosítasz, a 
 **Ingyenes magyar források:** a Médiaklikk, az RTL+, a TV2 Play és a Filmio külső linkként nyílik. Az RTL+ és a TV2 Play tiltja a beágyazást (`X-Frame-Options: SAMEORIGIN`); a Médiaklikk lejátszója beágyazva nem indul el, a Filmio pedig bejelentkezést kér, ami beágyazott ablakban (harmadik féltől származó sütik, Google-belépés) nem megbízható.
 
 **Új verzió kiadása:** módosítás után futtasd a `node bump-version.js` parancsot. Ez minden CSS- és JS-hivatkozásnak új `?v=` számot ad, és átnevezi a Service Worker gyorsítótárát, így a böngészők biztosan az összetartozó HTML-, CSS- és JS-fájlokat töltik be (a GitHub Pages néhány percig a régi fájlokat is kiszolgálhatja).
+
+## 11. „Mit nézzek ma?”
+
+A Kezdőlapon és a „Nézd most” fül tetején lévő gombbal nyílik. Először választani kell, hogy **film** vagy **sorozat** legyen, aztán három mód közül:
+
+- **🎲 Pörgetés:** posztercsík pörög, lassul, és megáll egy címen. Minden címnek van „ritkasága” az értékelése alapján (Gyakori, Ritka, Epikus, Legendás, színes kerettel); a ritkább ritkábban jön ki.
+- **❤️ Húzogatós:** kártyák egyesével; jobbra húzás (vagy ♥, illetve → billentyű) = tetszik, balra (✕, ←) = nem. Két kedvelés után egyre inkább a kedvelt műfajokhoz hasonlót mutat; 12 kártya után (vagy az „Ajánlások most” gombra) ajánlásokat ad.
+- **⚔️ Párbaj:** hét körön át két cím közül kell választani (a kettő lehetőleg más műfajú), a végén a választások alapján ajánl.
+
+A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már nézted” (sorozat, ha van kipipált része) jelzéssel. Források: sorozatok a TVmaze-ből (népszerű, 7 feletti értékelésű címek), filmek TMDB-kulccsal a TMDB népszerű filmjeiből, kulcs nélkül a Wikidatából (kb. 500 ismert film magyar címmel, poszter a Wikipédiából). Az ajánlás a kedvelt és elutasított címek műfajaiból számolt súlyok alapján történik.
+
+**Előzetesek:** az app YouTube oEmbed-del ellenőrzi, hogy a TMDB-ben szereplő videó létezik-e még; a törölt videókat átugorja, és a következő elérhetőt (lehetőleg magyart) mutatja.

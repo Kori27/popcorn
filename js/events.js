@@ -69,6 +69,7 @@ window.addEventListener('popstate', () => {
   const f = location.hash.match(/^#film-(.+)$/), mv = location.hash.match(/^#mozi-(\d+)$/), wf = location.hash.match(/^#wfilm-(Q\d+)$/);
   if (m) openShow(+m[1], false);
   else if (wf) openWikiFilm(wf[1], false);
+  else if (location.hash === '#mit-nezzek') openPicker(false);
   else if (f) openFilm(decodeURIComponent(f[1]), false);
   else if (mv) openMovie(+mv[1], false);
   else if (location.hash === '#beallitasok') openSettings(false);

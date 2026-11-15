@@ -1,9 +1,9 @@
 // Popcorn service worker: keeps the app shell available offline and,
 // where the browser supports Periodic Background Sync, checks followed series for new episodes.
 // Series data is cached by the page itself (localStorage), so API calls pass straight through.
-const CACHE = 'popcorn-v21';
+const CACHE = 'popcorn-v23';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
-  'css/app.css?v=21', 'js/core.js?v=21', 'js/i18n.js?v=21', 'js/storage.js?v=21', 'js/theme.js?v=21', 'js/services.js?v=21', 'js/api.js?v=21', 'js/helpers.js?v=21', 'js/filters.js?v=21', 'js/views/shell.js?v=21', 'js/views/home.js?v=21', 'js/views/search.js?v=21', 'js/views/upcoming.js?v=21', 'js/trailers.js?v=21', 'js/providers.js?v=21', 'js/films.js?v=21', 'js/localize.js?v=21', 'js/views/movie.js?v=21', 'js/views/watch.js?v=21', 'js/views/library.js?v=21', 'js/views/stats.js?v=21', 'js/views/detail.js?v=21', 'js/views/settings.js?v=21', 'js/backup.js?v=21', 'js/firebase-config.js?v=21', 'js/account.js?v=21', 'js/events.js?v=21', 'js/main.js?v=21'];
+  'css/app.css?v=23', 'js/core.js?v=23', 'js/i18n.js?v=23', 'js/storage.js?v=23', 'js/theme.js?v=23', 'js/services.js?v=23', 'js/api.js?v=23', 'js/helpers.js?v=23', 'js/filters.js?v=23', 'js/views/shell.js?v=23', 'js/views/home.js?v=23', 'js/views/search.js?v=23', 'js/views/upcoming.js?v=23', 'js/trailers.js?v=23', 'js/providers.js?v=23', 'js/films.js?v=23', 'js/localize.js?v=23', 'js/views/movie.js?v=23', 'js/views/watch.js?v=23', 'js/views/library.js?v=23', 'js/views/stats.js?v=23', 'js/views/picker.js?v=23', 'js/views/detail.js?v=23', 'js/views/settings.js?v=23', 'js/backup.js?v=23', 'js/firebase-config.js?v=23', 'js/account.js?v=23', 'js/events.js?v=23', 'js/main.js?v=23'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

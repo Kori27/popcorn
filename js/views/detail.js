@@ -78,7 +78,7 @@ function closeShow() {
   if (wide.matches) renderPlaceholder(); else { $('#sheet').hidden = true; sheetShow = null; }
   render(); // reflect any changes
 }
-const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie || history.state?.wfilm);
+const sheetOpen = () => !!(history.state?.show || history.state?.settings || history.state?.film || history.state?.movie || history.state?.wfilm || history.state?.picker);
 function pushSheet(st, hash) { if (wide.matches && sheetOpen()) history.replaceState(st, '', hash); else history.pushState(st, '', hash); }
 function showSheet() {
   const sh = $('#sheet'); sh.hidden = false; sh.scrollTop = 0; sheetShow = null;

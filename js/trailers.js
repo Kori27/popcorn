@@ -2,11 +2,27 @@
 'use strict';
 
 /* ---------- Trailers (TMDB → YouTube, played inside the app) ---------- */
-/** Best YouTube video: the app's language always wins (a Hungarian teaser beats an English trailer), then English. */
-function pickTrailer(results) {
+/** YouTube videos ranked: the app's language always wins (a Hungarian teaser beats an English trailer), then English. */
+function rankTrailers(results) {
   const score = v => (v.iso_639_1 === state.lang ? 100 : v.iso_639_1 === 'en' ? 10 : 0)
     + (v.type === 'Trailer' ? 4 : v.type === 'Teaser' ? 2 : 0) + (v.official ? 1 : 0);
-  return (results || []).filter(v => v.site === 'YouTube').sort((a, b) => score(b) - score(a))[0] || null;
+  return (results || []).filter(v => v.site === 'YouTube' && v.key).sort((a, b) => score(b) - score(a));
+}
+/** TMDB keeps links to videos that were later removed from YouTube; oEmbed tells whether one still exists. */
+async function ytAlive(key) {
+  const cacheKey = 'sn.yt.' + key, c = ls.get(cacheKey, null);
+  if (c && Date.now() - c.t < 3 * DAY) return c.ok;
+  try {
+    const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent('https://www.youtube.com/watch?v=' + key)}`);
+    const ok = r.ok;
+    ls.set(cacheKey, { t: Date.now(), ok });
+    return ok;
+  } catch { return true; }   // no answer (offline, blocked): do not hide the video because of that
+}
+/** First trailer that still plays, best language first. */
+async function pickTrailer(results) {
+  for (const v of rankTrailers(results).slice(0, 8)) if (await ytAlive(v.key)) return v;
+  return null;
 }
 /** Short note under the trailer about its language. */
 const trailerLangNote = t => state.lang === 'en' ? ''

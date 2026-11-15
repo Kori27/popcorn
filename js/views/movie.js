@@ -10,7 +10,7 @@ async function openMovie(id, push = true) {
   try {
     const m = await tmdb(`/movie/${id}?language=${TLANG()}&append_to_response=videos&include_video_language=${state.lang},en,null`);
     if (location.hash !== '#mozi-' + id) return;
-    const t = pickTrailer(m.videos?.results);
+    const t = await pickTrailer(m.videos?.results);
     const facts = [m.release_date ? `<span class="pill accent">${tr('Bemutató')}: ${fmtDate(m.release_date)}</span>` : '', m.runtime ? `<span class="pill neutral">${tr('{n} perc', { n: m.runtime })}</span>` : '',
       m.vote_count > 20 ? `<span class="pill neutral">★ ${m.vote_average.toFixed(1)}</span>` : '', ...(m.genres || []).slice(0, 3).map(g => `<span class="pill neutral">${esc(g.name)}</span>`)].join('');
     sh.innerHTML = `${m.backdrop_path ? backdrop(TIMG + 'w780' + m.backdrop_path, true) : backdrop(m.poster_path ? TIMG + 'w342' + m.poster_path : null)}<div class="sheet-bar">${closeBtnHtml()}</div><div class="sheet-body">

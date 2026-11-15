@@ -133,7 +133,7 @@ const freeHuPanel = () => `<div class="panel"><h3>${tr('Ingyenes magyar forráso
 
 function renderWatch(v, alive) {
   if (!watchSeg) watchSeg = fget('watchSeg', tmdbKey() ? 'free' : 'open');
-  v.innerHTML = `<div class="seg" role="group" aria-label="${tr('Nézd most')}">${WATCH_SEGS.map(([k, l]) => `<button data-wseg="${k}" aria-pressed="${watchSeg === k}">${tr(l)}</button>`).join('')}</div><div id="wbody"></div>`;
+  v.innerHTML = `${pickerCta()}<div class="seg" role="group" aria-label="${tr('Nézd most')}">${WATCH_SEGS.map(([k, l]) => `<button data-wseg="${k}" aria-pressed="${watchSeg === k}">${tr(l)}</button>`).join('')}</div><div id="wbody"></div>`;
   const body = $('#wbody');
   if (watchSeg === 'free') renderFree(body, alive);
   else if (watchSeg === 'open') renderOpen(body, alive);
