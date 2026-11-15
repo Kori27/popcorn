@@ -41,7 +41,7 @@ function restorePlayback(video, id) {
   window.addEventListener('pagehide', () => savePlayback(id, video.currentTime, video.duration), { once: true });
 }
 const iaThumb = id => `${IA}/services/img/${encodeURIComponent(id)}`;
-const WATCH_SEGS = [['free', 'Most nézhető'], ['open', 'Modern, szabad'], ['classic', 'Klasszikusok']];
+const WATCH_SEGS = [['free', 'Most nézhető'], ['open', 'Modern, szabad'], ['classic', 'Klasszikusok'], ['videa', 'Videa']];
 let watchSeg = null, iaQ = '', iaPage = 1, freePage = 1;
 
 /* ---------- classic public-domain films ---------- */
@@ -137,7 +137,102 @@ function renderWatch(v, alive) {
   const body = $('#wbody');
   if (watchSeg === 'free') renderFree(body, alive);
   else if (watchSeg === 'open') renderOpen(body, alive);
-  else renderClassic(body, alive);
+  else if (watchSeg === 'classic') renderClassic(body, alive);
+  else renderVideaWatch(body, alive);
+}
+
+let videaWatchPage = 1;
+let videaWatchBusy = false;
+function videaDurationSeconds(value) {
+  if (Number.isFinite(Number(value)) && String(value).trim() !== '') return Number(value);
+  const parts = String(value || '').trim().split(':').map(Number);
+  if (!parts.length || parts.some(n => !Number.isFinite(n))) return 0;
+  return parts.reduce((total, part) => total * 60 + part, 0);
+}
+function videaDurationLabel(seconds) {
+  const n = Math.max(0, Math.floor(seconds || 0));
+  const h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60);
+  return h ? `${h}ó ${m}p` : `${m}p`;
+}
+function videaWatchCard(item) {
+  const sec = videaDurationSeconds(item.duration);
+  return `<button class="card" data-videa="${esc(item.vcode)}" data-videa-duration="${sec}" aria-label="${esc(item.title || 'Videa-videó')}">
+    ${item.thumbnail ? `<img class="poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
+    <span class="name">${esc(item.title || 'Névtelen videó')}</span>
+    <span class="meta">${sec ? videaDurationLabel(sec) : esc(item.duration || 'Hossz nem ismert')}${item.channel?.name ? ' · ' + esc(item.channel.name) : ''}</span></button>`;
+}
+function applyVideaWatchFilter() {
+  const min = Number($('#videaMinDuration')?.value || 0);
+  let visible = 0;
+  document.querySelectorAll('#videaGrid [data-videa]').forEach(card => {
+    const duration = Number(card.dataset.videaDuration || 0);
+    const show = min === 0 || (duration > 0 && duration >= min);
+    card.hidden = !show;
+    if (show) visible++;
+  });
+  const count = $('#videaVisibleCount');
+  if (count) count.textContent = `${visible} megjelenített videó`;
+}
+async function loadVideaWatchPage(query, alive, append = false) {
+  if (videaWatchBusy || !query.trim()) return;
+  videaWatchBusy = true;
+  const status = $('#videaMoreStatus');
+  const more = $('#videaMore');
+  if (more) { more.disabled = true; more.textContent = 'Betöltés…'; }
+  try {
+    const page = append ? videaWatchPage + 1 : 1;
+    const response = await searchVideaVideos(query, page);
+    if (!alive() || query !== searchQ.trim()) return;
+    const items = Array.isArray(response?.videos) ? response.videos : [];
+    const grid = $('#videaGrid');
+    if (!grid) return;
+    const seen = new Set([...grid.querySelectorAll('[data-videa]')].map(x => x.dataset.videa));
+    const fresh = items.filter(x => x?.vcode && !seen.has(x.vcode));
+    if (!append) grid.innerHTML = '';
+    if (fresh.length) grid.insertAdjacentHTML('beforeend', fresh.map(videaWatchCard).join(''));
+    videaWatchPage = page;
+    const total = Number(response?.totalhits || 0);
+    const count = $('#videaCount');
+    if (count) count.textContent = `${total || 'Több'} találat`;
+    if (status) status.textContent = fresh.length ? `${grid.querySelectorAll('[data-videa]').length} videó betöltve` : 'Nincs több különálló találat ezen az oldalon.';
+    if (more) {
+      if (!fresh.length || (total && grid.querySelectorAll('[data-videa]').length >= total)) more.hidden = true;
+      else { more.hidden = false; more.disabled = false; more.textContent = 'További találatok betöltése'; }
+    }
+    applyVideaWatchFilter();
+  } catch (error) {
+    if (status) status.textContent = `A keresés nem sikerült: ${error?.message || error}`;
+    if (more) { more.hidden = false; more.disabled = false; more.textContent = 'Újrapróbálás'; }
+  } finally { videaWatchBusy = false; }
+}
+function renderVideaWatch(body, alive) {
+  searchKind = 'videa';
+  body.innerHTML = `<p class="note">${tr('Keress a Videa nyilvános videói között, és nyisd meg őket a Popcorn beágyazott lejátszójában.')}</p>
+    <div class="search">${ICON.search}<input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr('Videa-videó keresése')}" value="${esc(searchQ)}" aria-label="${tr('Videa-videó keresése')}">
+    <button class="clear" id="qclear" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
+    <div class="filter-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0">
+      <label class="filter"><span>${tr('Minimális hossz')}</span><select id="videaMinDuration"><option value="0">${tr('Bármilyen hossz')}</option><option value="1800">30 ${tr('perc')}</option><option value="3600" selected>60 ${tr('perc')}</option><option value="5400">90 ${tr('perc')}</option><option value="7200">120 ${tr('perc')}</option></select></label>
+      <span class="note" id="videaVisibleCount"></span>
+    </div>
+    <div class="sec-head"><h2>${tr('Videa-találatok')}</h2><span class="count" id="videaCount"></span></div>
+    <section id="videaGrid" class="grid"></section><p class="note" id="videaMoreStatus" aria-live="polite"></p>
+    <button class="btn ghost" id="videaMore" hidden>${tr('További találatok betöltése')}</button>`;
+  const q = $('#q');
+  q.addEventListener('input', () => {
+    searchQ = q.value; $('#qclear').hidden = !searchQ; videaWatchPage = 1;
+    clearTimeout(renderVideaWatch.timer);
+    renderVideaWatch.timer = setTimeout(() => loadVideaWatchPage(searchQ, alive, false), 350);
+  });
+  q.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { clearTimeout(renderVideaWatch.timer); loadVideaWatchPage(searchQ, alive, false); q.blur(); }
+  });
+  $('#qclear').addEventListener('click', () => {
+    searchQ = ''; q.value = ''; $('#qclear').hidden = true; $('#videaGrid').innerHTML = '';
+    $('#videaCount').textContent = ''; $('#videaMore').hidden = true; q.focus();
+  });
+  $('#videaMinDuration').addEventListener('change', applyVideaWatchFilter);
+  $('#videaMore').addEventListener('click', () => loadVideaWatchPage(searchQ, alive, true));
+  if (searchQ.trim()) loadVideaWatchPage(searchQ, alive, false);
 }
 
 async function renderFree(body, alive) {
@@ -288,16 +383,32 @@ async function openFilm(id, push = true) {
     const subtitles = m.files.filter(f => /\.vtt$/i.test(f.name));
     const src = f => `${IA}/download/${encodeURIComponent(id)}/${f.name.split('/').map(encodeURIComponent).join('/')}`;
     const title = open ? open[1] : m.title, year = open ? open[2] : m.year;
+    let localizedMovie = null, poster = iaThumb(id), localizedDescription = '';
+    if (tmdbKey()) {
+      try {
+        const lang = TLANG();
+        const found = await tmdb(`/search/movie?query=${encodeURIComponent(title)}&language=${lang}&include_adult=false`, 12 * H);
+        let candidates = found.results || [];
+        if (year) candidates.sort((a,b) => Math.abs(Number((a.release_date||'').slice(0,4))-Number(year)) - Math.abs(Number((b.release_date||'').slice(0,4))-Number(year)));
+        const match = candidates.find(x => x.overview || x.poster_path) || candidates[0];
+        if (match) {
+          localizedMovie = await tmdb(`/movie/${match.id}?language=${lang}`, 12 * H);
+          if (localizedMovie.poster_path) poster = `${TIMG}w500${localizedMovie.poster_path}`;
+          localizedDescription = localizedMovie.overview || '';
+        }
+      } catch {}
+    }
     const key = 'ia:' + id;
     sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}<a class="iconbtn" href="${IA}/details/${encodeURIComponent(id)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás az Internet Archive-on')}">${ICON.ext}</a></div>
       <div class="sheet-body">
-        ${video ? `<div class="player"><video id="film" controls playsinline preload="metadata" poster="${iaThumb(id)}"><source src="${src(video)}" type="${/\.ogv$/i.test(video.name) ? 'video/ogg' : 'video/mp4'}">${subtitles.map((f, i) => `<track kind="subtitles" src="${src(f)}" srclang="${esc((f.language || f.name.match(/\.([a-z]{2,3})\.vtt$/i)?.[1] || 'en').slice(0, 3))}" label="${esc(f.language || f.name)}" ${i === 0 ? 'default' : ''}>`).join('')}</video></div>`
+        ${poster && poster !== iaThumb(id) ? `<img class="poster" src="${esc(poster)}" alt="${esc(title)}" style="width:min(220px,45%);aspect-ratio:2/3;object-fit:cover;border-radius:14px;margin-bottom:14px" loading="lazy">` : ''}
+        ${video ? `<div class="player"><video id="film" controls playsinline preload="metadata" poster="${poster}"><source src="${src(video)}" type="${/\.ogv$/i.test(video.name) ? 'video/ogg' : 'video/mp4'}">${subtitles.map((f, i) => `<track kind="subtitles" src="${src(f)}" srclang="${esc((f.language || f.name.match(/\.([a-z]{2,3})\.vtt$/i)?.[1] || 'en').slice(0, 3))}" label="${esc(f.language || f.name)}" ${i === 0 ? 'default' : ''}>`).join('')}</video></div>`
           : errorBox('Ennek a filmnek már nincs lejátszható változata. Válassz egy másikat.')}
         <div><h2 style="font:800 24px/1.15 var(--font-display);margin:0 0 6px">${esc(title)}</h2>
           <div class="facts">${year ? `<span class="pill neutral">${esc(year)}</span>` : ''}${m.runtime ? `<span class="pill neutral">${esc(m.runtime)}</span>` : ''}<span class="pill ok">${tr(pd ? 'Közkincs' : 'Szabad licenc (CC)')}</span></div></div>
-        ${movieActions(key, { kind: 'ia', ref: id, title, img: iaThumb(id), year: String(year || '') })}
-        ${rateWidget(key, { kind: 'ia', ref: id, title, img: iaThumb(id) })}
-        ${m.desc ? `<p class="summary" lang="en">${esc(m.desc)}</p>` : ''}
+        ${movieActions(key, { kind: 'ia', ref: id, title, img: poster, year: String(year || '') })}
+        ${rateWidget(key, { kind: 'ia', ref: id, title, img: poster })}
+        ${localizedDescription ? `<p class="summary" lang="${state.lang === 'en' ? 'en' : 'hu'}">${esc(localizedDescription)}</p>` : (state.lang === 'en' && m.desc ? `<p class="summary" lang="en">${esc(m.desc)}</p>` : `<p class="note">${tr('Ehhez a filmhez nem találtunk megbízható magyar nyelvű leírást.')}</p>`)}
         <p class="note">${tr(pd ? 'Forrás: Internet Archive. Szerzői jog alól felszabadult (public domain) mű.' : 'Forrás: Internet Archive. Az alkotók Creative Commons licenccel, szabadon terjeszthetően tették közzé.')}</p></div>`;
     const player = $('#film');
     if (player) restorePlayback(player, id);

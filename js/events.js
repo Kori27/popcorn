@@ -34,7 +34,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.accent) { setAppearance('accent', t.dataset.accent); return; }
   if (t.dataset.size) { setAppearance('size', t.dataset.size); return; }
   if (t.hasAttribute('data-oled')) { setAppearance('oled'); return; }
-  if (t.dataset.tab) { if (t.dataset.skindgo) searchKind = t.dataset.skindgo; if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
+  if (t.dataset.tab) { if (t.dataset.skindgo) searchKind = t.dataset.skindgo; if (t.dataset.tab === 'search' && searchKind === 'videa') searchKind = 'tv'; if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
   if (t.hasAttribute('data-close')) { clearInterval(videaProgressTimer); sheetOpen() ? history.back() : closeShow(); return; }
   if (t.hasAttribute('data-settings')) {

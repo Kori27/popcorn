@@ -246,3 +246,11 @@ Megjegyzés: a Videa vagy a feltöltő által letiltott videók beágyazását e
 - Saját 1–5 csillagos értékelés, Videa-kedvencek és külön megnézendő lista.
 - A megnézendő Videa-videók a Kezdőlapon is megjelennek.
 - A TMDB-kulcs szükséges a leírások és előzetesek automatikus kereséséhez. A címfelismerés nem mindig pontos; ha nincs egyezés, a videó továbbra is lejátszható.
+
+
+## v39 – borítók, magyar leírások és Videa-hosszszűrő
+
+- A Videa kereső a Nézd most fülön minimális videóhosszt kínál (30 / 60 / 90 / 120 perc), és a rövid klipeket/előzeteseket ki lehet szűrni.
+- Az Internet Archive filmadatlapjai TMDB-egyezés esetén lokalizált posztert és az alkalmazás nyelvének megfelelő tartalmi összefoglalót kérnek.
+- Magyar nyelvű felületnél nem jelenítünk meg angol Internet Archive-leírást magyar leírásként; ha nincs magyar összefoglaló, ezt külön jelezzük.
+- A filmadatbázis-egyezés automatikus, ezért nem minden címnél garantált a megfelelő borító vagy leírás. A TMDB-kulcs továbbra is szükséges.

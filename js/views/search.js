@@ -16,10 +16,9 @@ const inDecade = (year, dec) => {
 
 function renderSearch(v, alive) {
   const film = searchKind === 'film';
-  const videa = searchKind === 'videa';
-  v.innerHTML = `<div class="seg" role="group" aria-label="${tr('Keresés')}">${[['tv', 'Sorozatok'], ['film', 'Filmek'], ['videa', 'Videa']].map(([k, l]) => `<button data-skind="${k}" aria-pressed="${searchKind === k}">${tr(l)}</button>`).join('')}</div>
+  v.innerHTML = `<div class="seg" role="group" aria-label="${tr('Keresés')}">${[['tv', 'Sorozatok'], ['film', 'Filmek']].map(([k, l]) => `<button data-skind="${k}" aria-pressed="${searchKind === k}">${tr(l)}</button>`).join('')}</div>
     <div class="search">${ICON.search}
-    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr(film ? 'Film címe, pl. Eredet' : videa ? 'Videa-videó keresése' : 'Sorozat címe, pl. Severance')}" value="${esc(searchQ)}" aria-label="${tr(film ? 'Film keresése' : videa ? 'Videa-videó keresése' : 'Sorozat keresése')}">
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr(film ? 'Film címe, pl. Eredet' : videa ? 'Videa-videó keresése' : 'Sorozat címe, pl. Severance')}" value="${esc(searchQ)}" aria-label="${tr(film ? 'Film keresése' : 'Sorozat keresése')}">
     <button class="clear" id="qclear" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
     ${videa ? '' : film ? filterBar('search', [
         { id: 'sfDecade', label: 'Megjelenés éve', def: '', options: SEARCH_DECADES },
@@ -99,36 +98,7 @@ async function runSearch(alive) {
   const box = $('#results'); if (!box) return;
   const query = searchQ.trim(), kind = searchKind;
   const stale = () => !alive() || searchQ.trim() !== query || searchKind !== kind;
-  if (kind === 'videa') {
-    if (!query) { box.innerHTML = `<div class="empty"><h3>Videa-keresés</h3><p>Írj be egy címet vagy keresőkifejezést. A találatok a Videa hivatalos OpenAPI-ján keresztül érkeznek.</p></div>`; return; }
-    box.innerHTML = `<p class="note">Videa-találatok betöltése…</p>`;
-    try {
-      const response = await searchVideaVideos(query, 1);
-      if (stale()) return;
-      const videos = response?.videos || [];
-      videaCurrentPage = 1;
-      const total = Number(response?.totalhits || videos.length);
-      const cards = list => list.map(item => `<button class="card" data-videa="${esc(item.vcode)}" aria-label="${esc(item.title || 'Videa-videó')}">
-          ${item.thumbnail ? `<img class="poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
-          <span class="name">${esc(item.title || 'Névtelen videó')}</span>
-          <span class="meta">${esc([item.duration, item.channel?.name].filter(Boolean).join(' · '))}</span></button>`).join('');
-      box.innerHTML = videos.length ? `<div class="sec-head"><h2>Videa-találatok</h2><span class="count" id="videaCount">${total} találat · ${videos.length} betöltve</span></div>
-        <div class="grid" id="videaGrid">${cards(videos)}</div>
-        ${videos.length < total ? `<div class="more-wrap" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px"><button class="btn ghost" id="videaMore">További találatok betöltése</button><p class="note" id="videaMoreStatus">10 / ${total} videó betöltve</p></div>` : ''}`
-        : (() => {
-          const d = response?._popcornDiagnostics;
-          const line = (name, item) => `<div class="note"><strong>${name}:</strong> ${esc(item?.status || 'ismeretlen')} · találat: ${item?.count == null ? 'nem értelmezhető' : item.count}${item?.error ? `<br>Hiba: ${esc(item.error)}` : ''}${item?.response ? `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto">${esc(item.response)}</pre>` : ''}</div>`;
-          return `<div class="empty"><h3>Nincs Videa-találat</h3><p>A Videa OpenAPI válaszát külön ellenőriztük mindkét keresési módszerrel.</p>
-            ${d ? `${line('Általános keresés', d.general)}${line('Címkekeresés', d.tag)}` : '<p class="note">Nem érkezett diagnosztikai adat.</p>'}
-            <p class="note">A diagnosztika nem jeleníti meg az API-kulcsot. A nyers válasz rövidített változata segít megállapítani, hogy a Videa melyik keresési módszere ad üres eredményt.</p></div>`;
-        })();
-      const moreButton = $('#videaMore');
-      if (moreButton) moreButton.addEventListener('click', () => loadMoreVidea(query, stale));
-    } catch (err) {
-      if (!stale()) box.innerHTML = `<div class="empty"><h3>Nem sikerült a Videa-keresés</h3><p>${esc(err?.message || 'Ellenőrizd az OpenAPI-kulcsot és a webhelyengedélyt a Beállításokban.')}</p><p class="note">Fontos: a kereséshez az OpenAPI-kulcs kell. A PlayerAPI-kulcs csak a beágyazott lejátszó vezérlésére szolgál.</p></div>`;
-    }
-    return;
-  }
+
   if (kind === 'film') {
     if (!query) {
       const mineList = Object.values(state.movies).sort((a, b) => b.added - a.added).slice(0, 12);

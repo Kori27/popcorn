@@ -292,10 +292,6 @@ async function playVidea(videoId) {
     iframe.title = data.title || 'Videa-lejátszó';
     iframe.allow = 'autoplay; fullscreen; picture-in-picture';
     iframe.allowFullscreen = true;
-    // Keep navigation initiated inside the embedded player inside its iframe.
-    // Deliberately omit allow-top-navigation and allow-top-navigation-by-user-activation.
-    // This can prevent some Videa player links/actions from replacing the Popcorn page.
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
     iframe.loading = 'eager';
     iframe.setAttribute('webkitallowfullscreen', 'webkitallowfullscreen');
     iframe.setAttribute('mozallowfullscreen', 'mozallowfullscreen');
