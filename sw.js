@@ -1,9 +1,9 @@
 // Popcorn service worker: keeps the app shell available offline and,
 // where the browser supports Periodic Background Sync, checks followed series for new episodes.
 // Series data is cached by the page itself (localStorage), so API calls pass straight through.
-const CACHE = 'popcorn-v17';
+const CACHE = 'popcorn-v18';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
-  'css/app.css?v=17', 'js/core.js?v=17', 'js/i18n.js?v=17', 'js/storage.js?v=17', 'js/theme.js?v=17', 'js/services.js?v=17', 'js/api.js?v=17', 'js/helpers.js?v=17', 'js/filters.js?v=17', 'js/views/shell.js?v=17', 'js/views/home.js?v=17', 'js/views/search.js?v=17', 'js/views/upcoming.js?v=17', 'js/trailers.js?v=17', 'js/providers.js?v=17', 'js/films.js?v=17', 'js/views/movie.js?v=17', 'js/views/watch.js?v=17', 'js/views/library.js?v=17', 'js/views/stats.js?v=17', 'js/views/detail.js?v=17', 'js/views/settings.js?v=17', 'js/backup.js?v=17', 'js/firebase-config.js?v=17', 'js/account.js?v=17', 'js/events.js?v=17', 'js/main.js?v=17'];
+  'css/app.css?v=18', 'js/core.js?v=18', 'js/i18n.js?v=18', 'js/storage.js?v=18', 'js/theme.js?v=18', 'js/services.js?v=18', 'js/api.js?v=18', 'js/helpers.js?v=18', 'js/filters.js?v=18', 'js/views/shell.js?v=18', 'js/views/home.js?v=18', 'js/views/search.js?v=18', 'js/views/upcoming.js?v=18', 'js/trailers.js?v=18', 'js/providers.js?v=18', 'js/films.js?v=18', 'js/views/movie.js?v=18', 'js/views/watch.js?v=18', 'js/views/library.js?v=18', 'js/views/stats.js?v=18', 'js/views/detail.js?v=18', 'js/views/settings.js?v=18', 'js/backup.js?v=18', 'js/firebase-config.js?v=18', 'js/account.js?v=18', 'js/events.js?v=18', 'js/main.js?v=18'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -17,8 +17,13 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   // Network first so updates arrive, cache as fallback when offline.
+  // 'no-cache' makes the browser ask the server every time (a quick 304 when nothing changed), instead of
+  // reusing its own copy for up to 10 minutes as GitHub Pages allows — otherwise an update could mix old and new files.
+  const fresh = e.request.mode === 'navigate'
+    ? new Request(e.request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : new Request(e.request, { cache: 'no-cache' });
   e.respondWith(
-    fetch(e.request).then(r => {
+    fetch(fresh).then(r => {
       const copy = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return r;
