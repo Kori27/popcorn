@@ -1,4 +1,4 @@
-// Sorozatnapló · Date helpers, episode progress, follow/watched actions.
+// Popcorn · Date helpers, episode progress, follow/watched actions.
 'use strict';
 
 /* ---------- dates & helpers ---------- */

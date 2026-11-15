@@ -1,4 +1,4 @@
-// Sorozatnapló · Tab switching, rendering shell and shared UI fragments.
+// Popcorn · Tab switching, rendering shell and shared UI fragments.
 'use strict';
 
 /* ---------- render shell ---------- */

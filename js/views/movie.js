@@ -1,4 +1,4 @@
-// Sorozatnapló · Cinema release detail page (TMDB).
+// Popcorn · Cinema release detail page (TMDB).
 'use strict';
 
 /* ---------- Movie detail (TMDB) ---------- */

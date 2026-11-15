@@ -1,4 +1,4 @@
-// Sorozatnapló · Translations (hu/en/de) and the tr() lookup.
+// Popcorn · Translations (hu/en/de) and the tr() lookup.
 'use strict';
 
 /* ---------- languages: Hungarian is the source text, en/de are looked up by it ---------- */
@@ -197,8 +197,8 @@ const I18N_ROWS = [
     'Deine Liste, Filme, Bewertungen und gesehenen Folgen liegen nur auf diesem Gerät. Speichere sie in eine Datei und lade sie auf dem neuen Handy. Der TMDB-Schlüssel ist nicht enthalten.'],
   ['Utolsó mentés: {d}', 'Last backup: {d}', 'Letzte Sicherung: {d}'], ['Még nem mentettél.', 'No backup yet.', 'Noch keine Sicherung.'], ['Mentés fájlba', 'Save to file', 'In Datei sichern'], ['Visszaállítás fájlból', 'Restore from file', 'Aus Datei wiederherstellen'],
   ['Mentés letöltve: {f}', 'Backup downloaded: {f}', 'Sicherung heruntergeladen: {f}'],
-  ['Ez a fájl nem olvasható. Válaszd a Sorozatnapló által letöltött .json mentést.', 'This file cannot be read. Choose the .json backup downloaded by Sorozatnapló.', 'Diese Datei ist nicht lesbar. Wähle die von Sorozatnapló gespeicherte .json-Sicherung.'],
-  ['Ez nem Sorozatnapló-mentés.', 'This is not a Sorozatnapló backup.', 'Das ist keine Sorozatnapló-Sicherung.'],
+  ['Ez a fájl nem olvasható. Válaszd a Popcorn által letöltött .json mentést.', 'This file cannot be read. Choose the .json backup downloaded by Popcorn.', 'Diese Datei ist nicht lesbar. Wähle die von Popcorn gespeicherte .json-Sicherung.'],
+  ['Ez nem Popcorn-mentés.', 'This is not a Popcorn backup.', 'Das ist keine Popcorn-Sicherung.'],
   ['Visszaállítod a {date} napon készült mentést?\n{a} sorozat, {b} film, {c} értékelés.\nA mostani adataid helyére kerül.', 'Restore the backup from {date}?\n{a} series, {b} films, {c} ratings.\nIt replaces your current data.', 'Sicherung vom {date} wiederherstellen?\n{a} Serien, {b} Filme, {c} Bewertungen.\nSie ersetzt deine aktuellen Daten.'],
   ['Visszaállítva: {n} sorozat', 'Restored: {n} series', 'Wiederhergestellt: {n} Serien'],
   ['Sorozatadatok: TVmaze. Filmadatok: Wikipédia, Wikidata és (kulccsal) TMDB.', 'Series data: TVmaze. Film data: Wikipedia, Wikidata and (with a key) TMDB.', 'Seriendaten: TVmaze. Filmdaten: Wikipedia, Wikidata und (mit Schlüssel) TMDB.'],

@@ -1,4 +1,4 @@
-// Sorozatnapló · My list tab: series, films, personal star ratings and statistics.
+// Popcorn · My list tab: series, films, personal star ratings and statistics.
 'use strict';
 
 /* ---------- Personal ratings (stored per device; shaped so they can be shared later) ---------- */

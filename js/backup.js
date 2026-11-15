@@ -1,4 +1,4 @@
-// Sorozatnapló · Backup to a JSON file and restore from it (e.g. when changing phones).
+// Popcorn · Backup to a JSON file and restore from it (e.g. when changing phones).
 'use strict';
 
 const BACKUP_FIELDS = ['follows', 'watched', 'ratings', 'movies', 'services', 'theme', 'lang', 'notify'];
@@ -6,8 +6,8 @@ const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
 
 function exportBackup() {
   const data = Object.fromEntries(BACKUP_FIELDS.map(k => [k, state[k]]));  // the TMDB key is left out on purpose
-  const body = JSON.stringify({ app: 'sorozatnaplo', format: 1, exported: new Date().toISOString(), data }, null, 1);
-  const name = `sorozatnaplo-mentes-${today()}.json`;
+  const body = JSON.stringify({ app: 'popcorn', format: 1, exported: new Date().toISOString(), data }, null, 1);
+  const name = `popcorn-mentes-${today()}.json`;
   const url = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
   const a = Object.assign(document.createElement('a'), { href: url, download: name });
   document.body.appendChild(a); a.click(); a.remove();
@@ -20,9 +20,9 @@ function exportBackup() {
 async function importBackup(file) {
   if (!file) return;
   let b;
-  try { b = JSON.parse(await file.text()); } catch { toast(tr('Ez a fájl nem olvasható. Válaszd a Sorozatnapló által letöltött .json mentést.')); return; }
+  try { b = JSON.parse(await file.text()); } catch { toast(tr('Ez a fájl nem olvasható. Válaszd a Popcorn által letöltött .json mentést.')); return; }
   const d = b?.data;
-  if (b?.app !== 'sorozatnaplo' || !isObj(d) || !isObj(d.follows) || !isObj(d.watched)) { toast(tr('Ez nem Sorozatnapló-mentés.')); return; }
+  if (!['popcorn', 'sorozatnaplo'].includes(b?.app) || !isObj(d) || !isObj(d.follows) || !isObj(d.watched)) { toast(tr('Ez nem Popcorn-mentés.')); return; }
   const follows = Object.fromEntries(Object.entries(d.follows).filter(([, f]) => isObj(f) && Number.isFinite(f.id) && typeof f.name === 'string'));
   const watched = Object.fromEntries(Object.entries(d.watched).filter(([, w]) => isObj(w)));
   const ratings = isObj(d.ratings) ? Object.fromEntries(Object.entries(d.ratings).filter(([, r]) => isObj(r) && r.stars >= 1 && r.stars <= 5)) : {};

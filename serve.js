@@ -1,4 +1,4 @@
-// Minimal static server for running Sorozatnapló locally (no dependencies).
+// Minimal static server for running Popcorn locally (no dependencies).
 // Usage: node serve.js            -> http://localhost:5173
 //        PORT=8080 node serve.js  -> http://localhost:8080
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -17,4 +17,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
     res.end(data);
   });
-}).listen(process.env.PORT || 5173, function () { console.log('Sorozatnapló: http://localhost:' + this.address().port); });
+}).listen(process.env.PORT || 5173, function () { console.log('Popcorn: http://localhost:' + this.address().port); });

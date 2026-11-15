@@ -1,4 +1,4 @@
-// Sorozatnapló · Colour mode, accent colours, OLED and text size.
+// Popcorn · Colour mode, accent colours, OLED and text size.
 'use strict';
 
 /* ---------- themes ---------- */

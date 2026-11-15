@@ -1,5 +1,5 @@
-# Sorozatnapló
-
+# Popcorn
+ Korábbi neve: Sorozatnapló.
 Telefonra és tabletre tervezett, telepíthető sorozat- és filmkövető alkalmazás (Progressive Web App).
 
 **Élő verzió:** https://kori27.github.io/popcorn/
@@ -9,7 +9,7 @@ Telefonra és tabletre tervezett, telepíthető sorozat- és filmkövető alkalm
 
 ## 1. Az alkalmazás célja
 
-A sorozatnézők információi ma szét vannak szórva: a megnézett részeket fejben kell tartani, az új részek és premierek dátumát külön oldalakon kell keresni, és nem mindig egyértelmű, melyik szolgáltatónál nézhető egy cím. A Sorozatnapló ezeket egy helyre gyűjti, reklámok és átirányítások nélkül:
+A sorozatnézők információi ma szét vannak szórva: a megnézett részeket fejben kell tartani, az új részek és premierek dátumát külön oldalakon kell keresni, és nem mindig egyértelmű, melyik szolgáltatónál nézhető egy cím. A Popcorn ezeket egy helyre gyűjti, reklámok és átirányítások nélkül:
 
 - követi, hol tartasz az egyes sorozatokban, és mi a következő rész;
 - jelzi az új részeket, premiereket és mozibemutatókat;

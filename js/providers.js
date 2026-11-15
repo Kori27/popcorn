@@ -1,4 +1,4 @@
-// Sorozatnapló · Exact streaming providers in Hungary (TMDB watch providers, data by JustWatch). Needs a TMDB key.
+// Popcorn · Exact streaming providers in Hungary (TMDB watch providers, data by JustWatch). Needs a TMDB key.
 'use strict';
 
 const PROVIDER_MATCH = { netflix: /netflix/i, hbo: /hbo|^max\b/i, disney: /disney/i, apple: /apple tv/i, prime: /amazon|prime video/i, sky: /skyshowtime/i, rtl: /^rtl/i, tv2: /tv2|tv 2/i, mtva: /m[ée]diaklikk/i };

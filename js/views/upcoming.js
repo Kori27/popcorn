@@ -1,4 +1,4 @@
-// Sorozatnapló · Coming soon tab: followed shows, premieres, cinema, today.
+// Popcorn · Coming soon tab: followed shows, premieres, cinema, today.
 'use strict';
 
 /* ---------- Calendar ---------- */

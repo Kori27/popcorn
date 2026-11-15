@@ -1,4 +1,4 @@
-// Sorozatnapló · localStorage wrapper and the persisted app state.
+// Popcorn · localStorage wrapper and the persisted app state.
 'use strict';
 
 /* ---------- storage ---------- */

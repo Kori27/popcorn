@@ -1,4 +1,4 @@
-// Sorozatnapló · Film tracking without any key: search and details from Wikipedia + Wikidata,
+// Popcorn · Film tracking without any key: search and details from Wikipedia + Wikidata,
 // "want to watch" / "watched" lists. With a TMDB key the film page also gets a trailer and exact providers.
 'use strict';
 

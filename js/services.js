@@ -1,4 +1,4 @@
-// Sorozatnapló · Streaming services and data shared with the service worker.
+// Popcorn · Streaming services and data shared with the service worker.
 'use strict';
 
 /* ---------- streaming services (matched by the show's original channel) ---------- */

@@ -1,4 +1,4 @@
-// Sorozatnapló · Statistics: watched episodes and films, watch time, monthly chart, favourite genres.
+// Popcorn · Statistics: watched episodes and films, watch time, monthly chart, favourite genres.
 'use strict';
 
 const fmtNum = (n, d = 0) => n.toLocaleString(LOC(), { maximumFractionDigits: d, minimumFractionDigits: d });

@@ -1,4 +1,4 @@
-// Sorozatnapló · Reusable filter bar (compact native selects), remembered per device.
+// Popcorn · Reusable filter bar (compact native selects), remembered per device.
 'use strict';
 
 const FILTERS = Object.assign({}, ls.get('sn.filters', {}));

@@ -1,4 +1,4 @@
-// Sorozatnapló · Watch now tab:
+// Popcorn · Watch now tab:
 //  - "Ingyen, legálisan": current films and series that are free in Hungary right now (TMDB / JustWatch data; opens on the service)
 //  - "Modern, szabad": open-licence modern films, played in the app (Internet Archive)
 //  - "Klasszikusok": public-domain films, played in the app (Internet Archive)

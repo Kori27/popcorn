@@ -1,4 +1,4 @@
-// Sorozatnapló · Search tab: series (TVmaze) and films (Wikipedia + Wikidata, no key needed), with filters.
+// Popcorn · Search tab: series (TVmaze) and films (Wikipedia + Wikidata, no key needed), with filters.
 'use strict';
 
 let searchKind = 'tv';

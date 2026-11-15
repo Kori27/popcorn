@@ -1,4 +1,4 @@
-// Sorozatnapló · TMDB access and in-app YouTube trailers.
+// Popcorn · TMDB access and in-app YouTube trailers.
 'use strict';
 
 /* ---------- Trailers (TMDB → YouTube, played inside the app) ---------- */

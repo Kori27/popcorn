@@ -1,4 +1,4 @@
-// Sorozatnapló · Series detail sheet, two-pane layout and navigation state.
+// Popcorn · Series detail sheet, two-pane layout and navigation state.
 'use strict';
 
 /* ---------- Detail sheet ---------- */

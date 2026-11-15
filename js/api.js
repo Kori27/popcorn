@@ -1,4 +1,4 @@
-// Sorozatnapló · Cached fetch layer and TVmaze data access.
+// Popcorn · Cached fetch layer and TVmaze data access.
 'use strict';
 
 /* ---------- API with cache ---------- */

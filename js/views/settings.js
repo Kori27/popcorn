@@ -1,4 +1,4 @@
-// Sorozatnapló · Settings sheet: language, appearance, services, notifications, TMDB key.
+// Popcorn · Settings sheet: language, appearance, services, notifications, TMDB key.
 'use strict';
 
 /* ---------- Settings ---------- */
@@ -87,6 +87,6 @@ async function setNotify(on) {
 async function testNotify() {
   try {
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification('Sorozatnapló', { body: tr('Így fog kinézni, ha új rész jelenik meg egy követett sorozatodból.'), icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'test' });
+    await reg.showNotification('Popcorn', { body: tr('Így fog kinézni, ha új rész jelenik meg egy követett sorozatodból.'), icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'test' });
   } catch { toast(tr('A próbaértesítés nem sikerült ezen az eszközön')); }
 }

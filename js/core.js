@@ -1,4 +1,4 @@
-// Sorozatnapló · Shared constants, DOM helpers and icons.
+// Popcorn · Shared constants, DOM helpers and icons.
 'use strict';
 
 const API = 'https://api.tvmaze.com';

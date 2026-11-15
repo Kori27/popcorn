@@ -1,4 +1,4 @@
-/* Sorozatnapló styles. Layout: phone-first app shell, two-pane on tablets. */
+/* Popcorn styles. Layout: phone-first app shell, two-pane on tablets. */
 /* Layout: phone-first app shell — sticky title bar, one scrolling column, fixed bottom tab bar; detail opens as a full-height sheet. */
 :root{
   --bg:#F3F4F8; --surface:#FFFFFF; --surface-2:#E8EAF2; --fg:#151826; --muted:#5C6178; --line:#DADDE8;

@@ -1,4 +1,4 @@
-// Sorozatnapló · App start-up.
+// Popcorn · App start-up.
 'use strict';
 
 /* ---------- start ---------- */

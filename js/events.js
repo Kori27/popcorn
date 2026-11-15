@@ -1,4 +1,4 @@
-// Sorozatnapló · Click, history and media-query event handling.
+// Popcorn · Click, history and media-query event handling.
 'use strict';
 
 /* ---------- events ---------- */

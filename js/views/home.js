@@ -1,4 +1,4 @@
-// Sorozatnapló · Home tab: continue watching, coming up, recommendations.
+// Popcorn · Home tab: continue watching, coming up, recommendations.
 'use strict';
 
 /* ---------- Home ---------- */
