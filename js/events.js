@@ -3,9 +3,12 @@
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-key]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key]');
   if (!t) return;
   if (t.dataset.fav) { e.stopPropagation(); toggleFav(t.dataset.fav); return; }
+  if (t.dataset.videaFav) { e.stopPropagation(); toggleVideaFav(t.dataset.videaFav); return; }
+  if (t.dataset.videaWant) { e.stopPropagation(); toggleVideaWant(t.dataset.videaWant); return; }
+  if (t.dataset.videaRate) { const i=t.dataset.videaRate.lastIndexOf('|'); setVideaRating(t.dataset.videaRate.slice(0,i), +t.dataset.videaRate.slice(i+1)); return; }
   if (t.dataset.videa) { playVidea(t.dataset.videa); return; }
   if (t.dataset.videaKey) { saveVideaKey(t.dataset.videaKey); return; }
   if (t.dataset.yt) { playYouTube(t); return; }
@@ -33,7 +36,7 @@ document.addEventListener('click', async e => {
   if (t.hasAttribute('data-oled')) { setAppearance('oled'); return; }
   if (t.dataset.tab) { if (t.dataset.skindgo) searchKind = t.dataset.skindgo; if (sheetOpen()) history.back(); setTab(t.dataset.tab); return; }
   if (t.dataset.open) { openShow(+t.dataset.open); return; }
-  if (t.hasAttribute('data-close')) { sheetOpen() ? history.back() : closeShow(); return; }
+  if (t.hasAttribute('data-close')) { clearInterval(videaProgressTimer); sheetOpen() ? history.back() : closeShow(); return; }
   if (t.hasAttribute('data-settings')) {
     if (history.state?.settings) return;
     if (sheetOpen()) { history.replaceState({ settings: 1 }, '', '#beallitasok'); openSettings(false); } else openSettings();

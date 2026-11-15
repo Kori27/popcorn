@@ -696,3 +696,28 @@ img,video,iframe{max-width:100%}
 
 /* Videa paginated search */
 .load-more-wrap{display:flex;justify-content:center;padding:24px 0 36px}.load-more-wrap .btn{min-width:220px}.load-more-wrap .btn:disabled{opacity:.65;cursor:wait}
+
+
+/* Videa search filters, favourite controls and continue-watching */
+.videa-filters{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 22px}
+.videa-filters .filter-control{display:flex;flex-direction:column;gap:6px;min-width:170px;color:var(--muted);font-size:12px}
+.videa-filters select{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:40px}
+.videa-grid{align-items:start}
+.videa-card{position:relative;min-width:0}
+.videa-card-open{display:flex;flex-direction:column;gap:8px;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.videa-card .name{display:block}
+.videa-fav{position:absolute;right:9px;top:9px;width:36px;height:36px;border:1px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(8,9,13,.82);color:white;font-size:20px;cursor:pointer;z-index:2}
+.videa-fav.on{color:#ff5572;background:rgba(40,10,20,.92);border-color:#ff5572}
+.videa-card[hidden]{display:none!important}
+.videa-resume{display:flex;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;max-width:780px}
+.videa-resume>img,.videa-resume>.poster-ph{width:180px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;flex:none}
+.videa-resume-info{display:flex;flex-direction:column;gap:9px;min-width:0;flex:1}
+.videa-resume-info>b{font-size:17px}
+.videa-progress{height:6px;background:var(--line);border-radius:10px;overflow:hidden}
+.videa-progress>span{display:block;height:100%;background:var(--accent);border-radius:10px}
+@media(max-width:600px){.videa-resume{align-items:flex-start}.videa-resume>img,.videa-resume>.poster-ph{width:112px}.videa-filters .filter-control{flex:1;min-width:140px}}
+
+/* Popcorn custom controls for the official Videa PlayerAPI */
+.videa-custom-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 2px}
+.videa-custom-controls input[type=range]{flex:1;min-width:140px;accent-color:var(--accent,#a78bfa)}
+.videa-custom-controls .note{margin:0;white-space:nowrap}

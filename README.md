@@ -230,3 +230,19 @@ A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már 
 - Részletesebb hibaüzenet jelenik meg, ha nincs beágyazó kód vagy a PlayerAPI nem válaszol.
 
 Megjegyzés: a Videa vagy a feltöltő által letiltott videók beágyazását ez a javítás nem kerüli meg.
+
+
+## v34 – Videa szűrők, folytatás és kedvencek
+
+- Videa-keresésnél minimumhossz-szűrő (5/20/30/60/90 perc), rövid klipek/előzetesek elrejtése és hossz szerinti rendezés.
+- A Videa-találatoknál videónkénti kedvenc jelölés, a kedvencek a kezdőlapon külön sávban jelennek meg.
+- A Videa PlayerAPI-val mentjük az aktuális pozíciót és a videó hosszát; a kezdőlapon a legutóbb nézett videó folytatható, a lejátszó pedig visszaugrik az elmentett pontra.
+- A lejátszási pozíció 5 másodpercenként mentődik. Ehhez érvényes, engedélyezett PlayerAPI-kulcs szükséges; nélküle a lejátszás működhet, de a pozíciókövetés nem.
+
+
+## Popcorn v35 – Videa filmadatlapok
+- Videa-lejátszó adatlapján automatikusan megpróbálja felismerni a film címét TMDB-kereséssel.
+- Találat esetén megjeleníti a cselekményleírást, műfajokat, játékidőt, TMDB-értékelést és a hivatalos YouTube-előzetest (ha elérhető).
+- Saját 1–5 csillagos értékelés, Videa-kedvencek és külön megnézendő lista.
+- A megnézendő Videa-videók a Kezdőlapon is megjelennek.
+- A TMDB-kulcs szükséges a leírások és előzetesek automatikus kereséséhez. A címfelismerés nem mindig pontos; ha nincs egyezés, a videó továbbra is lejátszható.

@@ -120,19 +120,159 @@ async function getVideaVideo(videoId) {
   return api.getVideoData(videoId, 0, 576);
 }
 
+
+let videaProgressTimer = null;
+let activeVideaPlayer = null;
+let activeVideaId = null;
+function toggleVideaFav(id) {
+  const existing = state.videaFavs[id];
+  if (existing) {
+    delete state.videaFavs[id];
+    toast('Eltávolítva a Videa-kedvencek közül.');
+  } else {
+    const history = state.videaHistory[id] || {};
+    const card = document.querySelector(`[data-videa-card="${CSS.escape(id)}"]`);
+    const title = card?.querySelector('.name')?.textContent || history.title || 'Videa-videó';
+    const img = card?.querySelector('img')?.src || history.thumbnail || '';
+    const duration = Number(card?.dataset.duration || history.duration || 0);
+    state.videaFavs[id] = { id, title, thumbnail: img, duration, durationText: card?.querySelector('.meta')?.textContent || '', updated: Date.now() };
+    toast('Hozzáadva a Videa-kedvencekhez.');
+  }
+  save();
+  document.querySelectorAll(`[data-videa-fav="${CSS.escape(id)}"]`).forEach(b => {
+    const on = !!state.videaFavs[id];
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', on ? 'Eltávolítás a kedvencekből' : 'Kedvencnek jelölés');
+  });
+  if (tab === 'home') render();
+}
+function saveVideaProgress(id, player) {
+  if (!id || !player) return;
+  try {
+    const position = Number(player.getCurrentTime?.() || 0);
+    const duration = Number(player.getDuration?.() || 0);
+    if (!Number.isFinite(position) || position < 0) return;
+    const prev = state.videaHistory[id] || {};
+    state.videaHistory[id] = { ...prev, id, position, duration: duration || prev.duration || 0, updated: Date.now() };
+    if (position > 30 && duration > 0 && position >= duration - 30) state.videaHistory[id].completed = true;
+    else state.videaHistory[id].completed = false;
+    save();
+  } catch {}
+}
+function startVideaProgress(id, player) {
+  activeVideaPlayer = player; activeVideaId = id;
+  clearInterval(videaProgressTimer);
+  const saved = state.videaHistory[id];
+  const resume = Number(saved?.position || 0);
+  try {
+    const duration = Number(player.getDuration?.() || saved?.duration || 0);
+    if (resume > 15 && (!duration || resume < duration - 30)) player.seekTo?.(resume);
+  } catch {}
+  saveVideaProgress(id, player);
+  videaProgressTimer = setInterval(() => {
+    if (activeVideaId !== id || !document.getElementById('videa_player_iframe')) { clearInterval(videaProgressTimer); return; }
+    saveVideaProgress(id, player);
+  }, 5000);
+}
+
+
+function videaTitleYear(title) {
+  const m = String(title || '').match(/\b(19|20)\d{2}\b/);
+  return m ? m[0] : '';
+}
+function videaCleanTitle(title) {
+  return String(title || 'Videa-videó')
+    .replace(/\b(19|20)\d{2}\b/g, ' ')
+    .replace(/\b(1080p|720p|4k|magyar szinkron|szinkronos|teljes film|hd|full hd)\b/gi, ' ')
+    .replace(/[|_[\]()]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function videaActions(id, data, match) {
+  const want = !!state.videaWant[id], stars = Number(state.videaRatings[id]?.stars || 0);
+  const title = data.title || 'Videa-videó';
+  const thumb = data.thumbnail || data.thumbnail_url || '';
+  const year = match?.release_date?.slice(0,4) || videaTitleYear(title);
+  const key = 'videa:' + id;
+  return `<div class="actions">
+    <button class="btn ${want ? 'soft' : 'primary'}" data-videa-want="${esc(id)}" aria-pressed="${want}">${want ? ICON.check : ICON.plus}${tr('Megnézendő')}</button>
+    <button class="btn ${state.videaFavs[id] ? 'soft' : 'ghost'}" data-videa-fav="${esc(id)}" aria-pressed="${!!state.videaFavs[id]}">${ICON.heart}${tr(state.videaFavs[id] ? 'Kedvenc' : 'Kedvencnek jelölöm')}</button>
+  </div>
+  <div class="panel" data-videa-rating="${esc(id)}"><h3>${tr('Saját értékelésed')}</h3>
+    <div class="stars" role="group" aria-label="${tr('Saját értékelésed')}">${[1,2,3,4,5].map(n => `<button class="star${n <= stars ? ' on' : ''}" data-videa-rate="${esc(id)}|${n}" aria-pressed="${n === stars}" aria-label="${tr('{n} csillag',{n})}">★</button>`).join('')}</div>
+    <span class="note">${stars ? tr('Értékelve: {n}/5',{n:stars}) : tr('Koppints a csillagokra az értékeléshez.')}</span>
+  </div>`;
+}
+async function enrichVideaDetails(id, data) {
+  const slot = document.getElementById('videaMeta');
+  if (!slot) return;
+  if (!tmdbKey()) {
+    slot.innerHTML = `<p class="note">${tr('A film tartalmi leírásához és hivatalos előzeteséhez add meg a TMDB-kulcsot a Beállításokban.')}</p>
+      <button class="btn soft" data-settings>${tr('TMDB-kulcs beállítása')}</button>`;
+    return;
+  }
+  const clean = videaCleanTitle(data.title);
+  if (!clean) return;
+  try {
+    const q = await tmdb(`/search/movie?query=${encodeURIComponent(clean)}&language=${TLANG()}&include_adult=false`, 12 * H);
+    const year = videaTitleYear(data.title);
+    let candidates = q.results || [];
+    if (year) candidates = candidates.sort((a,b) => Math.abs(Number((a.release_date||'').slice(0,4))-Number(year)) - Math.abs(Number((b.release_date||'').slice(0,4))-Number(year)));
+    const match = candidates.find(x => x.overview) || candidates[0];
+    if (!match || !document.getElementById('videaMeta')) {
+      slot.innerHTML = `<p class="note">${tr('Ehhez a videóhoz nem találtunk megbízható filmadatlapot. A videó címe és leírása a feltöltőtől függ.')}</p>`;
+      return;
+    }
+    const m = await tmdb(`/movie/${match.id}?language=${TLANG()}&append_to_response=videos`, 12 * H);
+    if (!document.getElementById('videaMeta')) return;
+    const trailer = await pickTrailer(m.videos?.results);
+    const key = 'videa:' + id;
+    slot.innerHTML = `${m.overview ? `<p class="summary">${esc(m.overview)}</p>` : `<p class="note">${tr('Ehhez a filmhez nincs elérhető tartalmi leírás.')}</p>`}
+      <div class="facts">${m.release_date ? `<span class="pill neutral">${esc(m.release_date.slice(0,4))}</span>` : ''}${m.runtime ? `<span class="pill neutral">${tr('{n} perc',{n:m.runtime})}</span>` : ''}${m.vote_count > 20 ? `<span class="pill neutral">TMDB ★ ${m.vote_average.toFixed(1)}</span>` : ''}${(m.genres||[]).slice(0,3).map(g=>`<span class="pill neutral">${esc(g.name)}</span>`).join('')}</div>
+      ${trailer ? `<div class="panel"><h3>${tr('Előzetes')}</h3><button class="yt" data-yt="${esc(trailer.key)}" aria-label="${tr('Előzetes lejátszása')}" style="background-image:url('https://i.ytimg.com/vi/${esc(trailer.key)}/hqdefault.jpg')"><span class="play">${ICON.play}</span></button><p class="note">${esc(trailer.name)}${trailerLangNote(trailer)}</p></div>` : `<div class="panel"><h3>${tr('Előzetes')}</h3><p>${tr('Ehhez a címhez nem találtunk előzetest.')}</p><a class="btn ghost" style="text-decoration:none" href="${ytSearch(m.title)}" target="_blank" rel="noopener">${ICON.ext}${tr('Keresés a YouTube-on')}</a></div>`}
+      <p class="note">${tr('A leírás és az előzetes a TMDB adatbázisából származik; a videó és a film egyezése automatikus, ezért ellenőrizd a címet.')}</p>`;
+  } catch (e) {
+    if (document.getElementById('videaMeta')) slot.innerHTML = `<p class="note">${tr('A filmadatlap most nem tölthető be.')}</p>`;
+  }
+}
+function toggleVideaWant(id) {
+  const data = state.videaHistory[id] || {};
+  if (state.videaWant[id]) { delete state.videaWant[id]; toast('Eltávolítva a megnézendők közül.'); }
+  else { state.videaWant[id] = { id, title: data.title || state.videaFavs[id]?.title || 'Videa-videó', thumbnail: data.thumbnail || state.videaFavs[id]?.thumbnail || '', updated: Date.now() }; toast('Hozzáadva a megnézendőkhöz.'); }
+  save();
+  const b = document.querySelector(`[data-videa-want="${CSS.escape(id)}"]`);
+  if (b) { const on=!!state.videaWant[id]; b.classList.toggle('soft',on); b.classList.toggle('primary',!on); b.setAttribute('aria-pressed',String(on)); b.innerHTML=(on?ICON.check:ICON.plus)+tr('Megnézendő'); }
+  if (tab === 'home') render();
+}
+function setVideaRating(id, stars) {
+  if (stars) state.videaRatings[id] = { stars, at: Date.now(), title: state.videaHistory[id]?.title || 'Videa-videó' };
+  else delete state.videaRatings[id];
+  save();
+  const panel = document.querySelector(`[data-videa-rating="${CSS.escape(id)}"]`);
+  if (panel) panel.outerHTML = `<div class="panel" data-videa-rating="${esc(id)}"><h3>${tr('Saját értékelésed')}</h3><div class="stars">${[1,2,3,4,5].map(n=>`<button class="star${n<=stars?' on':''}" data-videa-rate="${esc(id)}|${n}" aria-pressed="${n===stars}" aria-label="${tr('{n} csillag',{n})}">★</button>`).join('')}</div><span class="note">${tr('Értékelve: {n}/5',{n:stars})}</span></div>`;
+  toast('Értékelés elmentve.');
+}
+
 async function playVidea(videoId) {
+  clearInterval(videaProgressTimer); activeVideaPlayer = null; activeVideaId = null;
   if (!/^[A-Za-z0-9]{16}$/.test(videoId)) { toast('Érvénytelen Videa-videóazonosító.'); return; }
 
   const sh = $('#sheet');
   sh.hidden = false;
   sh.scrollTop = 0;
   sh.innerHTML = `<div class="sheet-bar"><button class="iconbtn" data-close aria-label="Bezárás">${ICON.back}</button></div>
-    <div class="sheet-body"><h2>Videa-videó betöltése…</h2><div class="videa-embed" id="videaEmbed"></div>
+    <div class="sheet-body"><h2>Videa-videó betöltése…</h2><div id="videaActions"></div><div id="videaMeta"><p class="note">Filmleírás és előzetes keresése…</p></div><div class="videa-embed" id="videaEmbed"></div>
     <p class="note" id="videaPlayerStatus" aria-live="polite">A hivatalos Videa-lejátszó betöltése folyamatban…</p></div>`;
 
   try {
     // A videó adata és a hivatalos embed az elsődleges. A PlayerAPI nem feltétele a lejátszásnak.
     const data = await getVideaVideo(videoId);
+    const prior = state.videaHistory[videoId] || {};
+    state.videaHistory[videoId] = { ...prior, id: videoId, title: data.title || prior.title || 'Videa-videó',
+      thumbnail: data.thumbnail || data.thumbnail_url || prior.thumbnail || '', updated: Date.now() };
+    save();
+    const actionSlot = $('#videaActions');
+    if (actionSlot) actionSlot.innerHTML = videaActions(videoId, data, null);
+    enrichVideaDetails(videoId, data);
     const embedHtml = data?.oembed_data?.html || '';
     const parsed = new DOMParser().parseFromString(embedHtml, 'text/html');
     const sourceFrame = parsed.querySelector('iframe');
@@ -152,6 +292,10 @@ async function playVidea(videoId) {
     iframe.title = data.title || 'Videa-lejátszó';
     iframe.allow = 'autoplay; fullscreen; picture-in-picture';
     iframe.allowFullscreen = true;
+    // Keep navigation initiated inside the embedded player inside its iframe.
+    // Deliberately omit allow-top-navigation and allow-top-navigation-by-user-activation.
+    // This can prevent some Videa player links/actions from replacing the Popcorn page.
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
     iframe.loading = 'eager';
     iframe.setAttribute('webkitallowfullscreen', 'webkitallowfullscreen');
     iframe.setAttribute('mozallowfullscreen', 'mozallowfullscreen');
@@ -170,7 +314,8 @@ async function playVidea(videoId) {
         new VIDEA.VideaPlayer({
           iframeID: 'videa_player_iframe',
           events: {
-            onReady: () => {
+            onReady: (player) => {
+              startVideaProgress(videoId, player);
               const note = $('#videaPlayerStatus');
               if (note) note.textContent = 'A Videa-lejátszó készen áll.';
             },

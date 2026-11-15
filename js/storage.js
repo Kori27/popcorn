@@ -24,3 +24,9 @@ state.theme = Object.assign({ mode: 'system', accent: 'popcorn', oled: false, si
 if (!state.theme.popcorn) { if (state.theme.accent === 'blue') state.theme.accent = 'popcorn'; state.theme.popcorn = 1; }
 state.lang = state.lang || ((navigator.language || 'hu').slice(0, 2) === 'de' ? 'de' : (navigator.language || 'hu').slice(0, 2) === 'en' ? 'en' : 'hu');
 
+
+// Videa personal library: favourites and last playback position.
+state.videaFavs = state.videaFavs || {};
+state.videaHistory = state.videaHistory || {};
+state.videaWant = state.videaWant || {};
+state.videaRatings = state.videaRatings || {};
