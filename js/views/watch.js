@@ -5,6 +5,41 @@
 'use strict';
 
 const IA = 'https://archive.org';
+
+/* ---------- resume playback: remembers the position per film on this device ---------- */
+const PLAYBACK_KEY = 'popcorn.playback.v1';
+function playbackStore() {
+  try { return JSON.parse(localStorage.getItem(PLAYBACK_KEY) || '{}'); } catch { return {}; }
+}
+function savePlayback(id, time, duration) {
+  if (!Number.isFinite(time) || time < 5) return;
+  const data = playbackStore();
+  if (Number.isFinite(duration) && duration > 0 && time >= duration - 20) delete data[id];
+  else data[id] = { time: Math.floor(time), updated: Date.now() };
+  try { localStorage.setItem(PLAYBACK_KEY, JSON.stringify(data)); } catch {}
+}
+function restorePlayback(video, id) {
+  const data = playbackStore(), saved = data[id];
+  if (saved && Number.isFinite(saved.time) && saved.time >= 5) {
+    const apply = () => {
+      if (video.duration && saved.time < video.duration - 20) {
+        video.currentTime = saved.time;
+        toast(tr('Folytatás innen: {time}', { time: Math.floor(saved.time / 60) + ':' + String(Math.floor(saved.time % 60)).padStart(2, '0') }));
+      } else {
+        delete data[id];
+        try { localStorage.setItem(PLAYBACK_KEY, JSON.stringify(data)); } catch {}
+      }
+    };
+    if (video.readyState >= 1) apply(); else video.addEventListener('loadedmetadata', apply, { once: true });
+  }
+  let lastSaved = 0;
+  video.addEventListener('timeupdate', () => {
+    if (Math.abs(video.currentTime - lastSaved) >= 10) { lastSaved = video.currentTime; savePlayback(id, video.currentTime, video.duration); }
+  });
+  video.addEventListener('pause', () => savePlayback(id, video.currentTime, video.duration));
+  video.addEventListener('ended', () => savePlayback(id, video.duration, video.duration));
+  window.addEventListener('pagehide', () => savePlayback(id, video.currentTime, video.duration), { once: true });
+}
 const iaThumb = id => `${IA}/services/img/${encodeURIComponent(id)}`;
 const WATCH_SEGS = [['free', 'Most nézhető'], ['open', 'Modern, szabad'], ['classic', 'Klasszikusok']];
 let watchSeg = null, iaQ = '', iaPage = 1, freePage = 1;
@@ -210,19 +245,20 @@ async function openFilm(id, push = true) {
       title: [].concat(d.metadata?.title || id)[0], year: d.metadata?.year || (d.metadata?.date || '').slice(0, 4), runtime: d.metadata?.runtime,
       license: d.metadata?.licenseurl || '',
       desc: strip([].concat(d.metadata?.description || '').join(' ')).slice(0, 1500), server: d.d1,
-      files: (d.files || []).filter(f => /\.(mp4|ogv|srt|vtt)$/i.test(f.name)).map(f => ({ name: f.name, format: f.format }))
+      files: (d.files || []).filter(f => /\.(mp4|ogv|srt|vtt)$/i.test(f.name)).map(f => ({ name: f.name, format: f.format, source: f.source || '', language: f.language || '' }))
     }));
     if (location.hash !== hash) return;
     const open = OPEN_FILMS.find(f => f[0] === id);
     const pd = !open && (!m.license || /publicdomain/i.test(m.license));
     const pick = fmt => m.files.find(f => f.format === fmt);
     const video = pick('512Kb MPEG4') || pick('h.264') || m.files.find(f => /\.mp4$/i.test(f.name)) || pick('Ogg Video');
+    const subtitles = m.files.filter(f => /\.vtt$/i.test(f.name));
     const src = f => `${IA}/download/${encodeURIComponent(id)}/${f.name.split('/').map(encodeURIComponent).join('/')}`;
     const title = open ? open[1] : m.title, year = open ? open[2] : m.year;
     const key = 'ia:' + id;
     sh.innerHTML = `<div class="sheet-bar">${closeBtnHtml()}<a class="iconbtn" href="${IA}/details/${encodeURIComponent(id)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás az Internet Archive-on')}">${ICON.ext}</a></div>
       <div class="sheet-body">
-        ${video ? `<div class="player"><video id="film" controls playsinline preload="metadata" poster="${iaThumb(id)}"><source src="${src(video)}" type="${/\.ogv$/i.test(video.name) ? 'video/ogg' : 'video/mp4'}"></video></div>`
+        ${video ? `<div class="player"><video id="film" controls playsinline preload="metadata" poster="${iaThumb(id)}"><source src="${src(video)}" type="${/\.ogv$/i.test(video.name) ? 'video/ogg' : 'video/mp4'}">${subtitles.map((f, i) => `<track kind="subtitles" src="${src(f)}" srclang="${esc((f.language || f.name.match(/\.([a-z]{2,3})\.vtt$/i)?.[1] || 'en').slice(0, 3))}" label="${esc(f.language || f.name)}" ${i === 0 ? 'default' : ''}>`).join('')}</video></div>`
           : errorBox('Ennek a filmnek már nincs lejátszható változata. Válassz egy másikat.')}
         <div><h2 style="font:800 24px/1.15 var(--font-display);margin:0 0 6px">${esc(title)}</h2>
           <div class="facts">${year ? `<span class="pill neutral">${esc(year)}</span>` : ''}${m.runtime ? `<span class="pill neutral">${esc(m.runtime)}</span>` : ''}<span class="pill ok">${tr(pd ? 'Közkincs' : 'Szabad licenc (CC)')}</span></div></div>
@@ -230,5 +266,7 @@ async function openFilm(id, push = true) {
         ${rateWidget(key, { kind: 'ia', ref: id, title, img: iaThumb(id) })}
         ${m.desc ? `<p class="summary" lang="en">${esc(m.desc)}</p>` : ''}
         <p class="note">${tr(pd ? 'Forrás: Internet Archive. Szerzői jog alól felszabadult (public domain) mű.' : 'Forrás: Internet Archive. Az alkotók Creative Commons licenccel, szabadon terjeszthetően tették közzé.')}</p></div>`;
+    const player = $('#film');
+    if (player) restorePlayback(player, id);
   } catch { sh.querySelector('.sheet-body').innerHTML = errorBox('Nem sikerült betölteni a filmet. Ellenőrizd az internetkapcsolatot.'); }
 }

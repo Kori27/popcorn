@@ -5,15 +5,20 @@
 async function renderHome(v, alive) {
   const ids = Object.keys(state.follows);
   if (!ids.length) {
-    v.innerHTML = `<div class="empty"><h3>${tr('Kövesd a sorozataidat egy helyen')}</h3>
-      <p>${tr('Keress rá egy sorozatra, tedd fel a listádra, és pipáld ki a megnézett részeket. Itt mindig látod, melyik rész jön legközelebb, és mikor jelenik meg az új epizód.')}</p>
-      <button class="btn primary" data-tab="search">${ICON.search}${tr('Sorozat keresése')}</button></div>
+    v.innerHTML = `<div id="featured"></div>
+      <div class="welcome-panel">
+        <span class="welcome-kicker">${tr('A következő kedvenced itt kezdődik')}</span>
+        <h2>${tr('Filmek és sorozatok. Egy helyen.')}</h2>
+        <p>${tr('Fedezz fel újdonságokat, keress rá a kedvenceidre, és építsd fel a saját listádat.')}</p>
+        <button class="btn primary" data-tab="search">${ICON.search}${tr('Felfedezés')}</button>
+      </div>
       ${servicesSection()}
       <section><div class="sec-head"><h2>${tr('Népszerű sorozatok')}</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
     loadPopular(alive); loadOnMine(alive);
     return;
   }
-  v.innerHTML = `<section><div class="sec-head"><h2>${tr('Folytasd')}</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
+  v.innerHTML = `<div id="featured"></div>
+    <section><div class="sec-head"><h2>${tr('Folytasd')}</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
     <section><div class="sec-head"><h2>${tr('Hamarosan')}</h2><span class="count">${tr('következő 14 nap')}</span></div><div id="soon">${skelRows(2)}</div></section>
     ${servicesSection()}
     <section><div class="sec-head"><h2>${tr('Népszerű sorozatok')}</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
@@ -71,6 +76,11 @@ async function loadPopular(alive) {
   try {
     const list = await getPopular();
     if (!alive()) return;
+    const featured = $('#featured');
+    if (featured && list.length) {
+      const pick = list.find(s => s.img) || list[0];
+      featured.innerHTML = `<button class="feature feature-home" data-open="${pick.id}" style="background-image:url('${esc(pick.img || '')}')" aria-label="${esc(pick.name)}"><span class="feature-text"><span class="kicker">${tr('Kiemelt ajánlat')}</span><b>${esc(pick.name)}</b><span class="feature-meta">${esc([year(pick), (pick.genres || []).slice(0, 2).join(' · '), pick.rating ? '★ ' + pick.rating : ''].filter(Boolean).join('  •  '))}</span><span class="feature-desc">${esc(pick.summary || tr('Fedezd fel a sorozatot'))}</span><span class="feature-cta">${ICON.play} ${tr('Adatlap megnyitása')}</span></span></button>`;
+    }
     $('#pop').innerHTML = list.length ? `<div class="rail">${list.map(s => showCard(s)).join('')}</div>` : errorBox(NET_ERR);
   } catch { if (alive()) $('#pop').innerHTML = errorBox(NET_ERR); }
 }

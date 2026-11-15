@@ -165,3 +165,16 @@ Kulcs nélkül minden más működik, a filmkeresés és -követés is. Ilyenkor
 ## 8. Adatforrások és jogok
 
 Sorozatadatok: TVmaze (CC BY-SA). Film- és előzetes-adatok: TMDB („This product uses the TMDB API but is not endorsed or certified by TMDB.”). Filmadatok kulcs nélkül: Wikipédia és Wikidata (CC BY-SA / CC0). Szolgáltató-adatok: JustWatch, a TMDB-n keresztül. Lejátszható filmek: Internet Archive, kizárólag közkincs (public domain) és kézzel ellenőrzött, Creative Commons licencű tételek. Az app saját tartalmat nem tárol és nem terjeszt.
+
+## 9. Popcorn – katalógus és lejátszás
+
+Az app két külön dolgot kezel:
+
+- **Katalógus és adatlapok:** sorozatadatok a TVmaze-ből, filmadatok a Wikidatából és a Wikipédiából. Ezek leírást, posztert és keresést adnak, teljes filmet nem.
+- **Lejátszható tartalom:** a „Nézd most” részben az Internet Archive közkincs vagy ellenőrzött Creative Commons videói. A beépített lejátszó csak ténylegesen elérhető videófájlt játszik le.
+
+A magyarországi streaming-elérhetőséghez, a szolgáltatók kínálatához és több TMDB-funkcióhoz TMDB API-kulcs kell, ezt a Beállításokban lehet megadni. GitHub Pages-en a böngészőben megadott kulcs nem titkos: személyes használatnál is a saját felelősségedre használd, és ne tedd bele a forráskódba.
+
+**Feliratok:** a lejátszó felkínálja a forrás WebVTT (`.vtt`) feliratait a böngésző saját feliratválasztójában. Az Internet Archive azonban jelenleg nem engedi a feliratfájlok betöltését más oldalról (CORS), ezért ezek a legtöbb böngészőben nem jelennek meg. A projekt nem készít olyan hangsávot vagy feliratot, amelyet a forrás nem ad.
+
+**Lejátszás folytatása:** az Internet Archive-ból lejátszott filmeknél az app megjegyzi, hol tartasz. Ha bezárod az adatlapot, majd később visszatérsz ugyanahhoz a filmhez, a lejátszó onnan folytatja. A pozíció a böngésző helyi tárhelyén marad, a film végén törlődik. Másik eszközre nem szinkronizálódik, és a böngészőadatok törlésével elveszhet.
