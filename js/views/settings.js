@@ -46,7 +46,7 @@ function appearancePanels() {
       ${[['hu', 'Magyar'], ['en', 'English'], ['de', 'Deutsch']].map(([k, l]) => chip('data-lang', k, state.lang, l)).join('')}</div></div>
     <div class="panel"><h3>${tr('Megjelenés')}</h3>
       <span class="label">${tr('Mód')}</span><div class="chips">${[['system', 'Rendszer'], ['light', 'Világos'], ['dark', 'Sötét']].map(([k, l]) => chip('data-mode', k, th.mode, tr(l))).join('')}</div>
-      <span class="label">${tr('Kiemelőszín')}</span><div class="chips">${[['blue', 'Kék'], ['violet', 'Lila'], ['green', 'Smaragd'], ['orange', 'Narancs'], ['pink', 'Rózsa'], ['red', 'Piros']].map(([k, l]) => chip('data-accent', k, th.accent, tr(l), swatch(k))).join('')}</div>
+      <span class="label">${tr('Kiemelőszín')}</span><div class="chips">${[['popcorn', 'Popcorn'], ['blue', 'Kék'], ['violet', 'Lila'], ['green', 'Smaragd'], ['orange', 'Narancs'], ['pink', 'Rózsa'], ['red', 'Piros']].map(([k, l]) => chip('data-accent', k, th.accent, tr(l), swatch(k))).join('')}</div>
       <div class="chips"><button class="chip" data-oled aria-pressed="${!!th.oled}">${ICON.check}${tr('Teljesen fekete háttér sötét módban (OLED-kijelzőn kíméli az akkut)')}</button></div>
       <span class="label">${tr('Szövegméret')}</span><div class="chips">${[['small', 'Kicsi'], ['normal', 'Normál'], ['large', 'Nagy']].map(([k, l]) => chip('data-size', k, th.size, tr(l))).join('')}</div>
     </div>`;

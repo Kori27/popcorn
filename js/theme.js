@@ -3,7 +3,8 @@
 
 /* ---------- themes ---------- */
 const ACCENTS = {
-  blue:   { light: ['#3150D8', '#E2E7FD'], dark: ['#8196FF', '#232B55'] },
+  popcorn: { light: ['#E11D48', '#FDE2E8'], dark: ['#FF4D67', '#3A1721'] },
+  blue:  { light: ['#3150D8', '#E2E7FD'], dark: ['#8196FF', '#232B55'] },
   violet: { light: ['#6D3FD1', '#ECE4FC'], dark: ['#B39BFF', '#2E2550'] },
   green:  { light: ['#0F7A5C', '#D7F0E6'], dark: ['#4CC9A0', '#15372D'] },
   orange: { light: ['#C2410C', '#FCE7DA'], dark: ['#FF9A5C', '#3D2616'] },
@@ -15,7 +16,7 @@ function applyTheme() {
   const th = state.theme, root = document.documentElement;
   const dark = th.mode === 'dark' || (th.mode === 'system' && darkMq.matches);
   root.dataset.theme = dark ? 'dark' : 'light';
-  const [acc, soft] = (ACCENTS[th.accent] || ACCENTS.blue)[dark ? 'dark' : 'light'];
+  const [acc, soft] = (ACCENTS[th.accent] || ACCENTS.popcorn)[dark ? 'dark' : 'light'];
   root.style.setProperty('--accent', acc);
   root.style.setProperty('--accent-soft', soft);
   const oled = dark && th.oled;

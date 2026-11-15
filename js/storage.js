@@ -17,6 +17,8 @@ const ls = {
 let state = ls.get('sn.state', null) || { follows: {}, watched: {} };
 state.services = state.services || [];
 state.notify = !!state.notify;
-state.theme = Object.assign({ mode: 'system', accent: 'blue', oled: false, size: 'normal' }, state.theme);
+state.theme = Object.assign({ mode: 'system', accent: 'popcorn', oled: false, size: 'normal' }, state.theme);
+// Popcorn redesign: the old default (blue) becomes the new Popcorn red once; any other choice is kept.
+if (!state.theme.popcorn) { if (state.theme.accent === 'blue') state.theme.accent = 'popcorn'; state.theme.popcorn = 1; }
 state.lang = state.lang || ((navigator.language || 'hu').slice(0, 2) === 'de' ? 'de' : (navigator.language || 'hu').slice(0, 2) === 'en' ? 'en' : 'hu');
 
