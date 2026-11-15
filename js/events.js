@@ -2,6 +2,18 @@
 'use strict';
 
 /* ---------- events ---------- */
+// A Videa-kártyák kattintását már a capture fázisban elfogjuk:
+// így semmilyen beágyazott elem vagy későbbi kezelő nem navigálhat el a Videa oldalára.
+document.addEventListener('click', e => {
+  const card = e.target.closest('[data-videa]');
+  if (!card) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  const videoId = card.dataset.videa;
+  if (videoId) playVidea(videoId);
+}, true);
+
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key]');
   if (!t) return;

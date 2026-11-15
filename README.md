@@ -254,3 +254,25 @@ Megjegyzés: a Videa vagy a feltöltő által letiltott videók beágyazását e
 - Az Internet Archive filmadatlapjai TMDB-egyezés esetén lokalizált posztert és az alkalmazás nyelvének megfelelő tartalmi összefoglalót kérnek.
 - Magyar nyelvű felületnél nem jelenítünk meg angol Internet Archive-leírást magyar leírásként; ha nincs magyar összefoglaló, ezt külön jelezzük.
 - A filmadatbázis-egyezés automatikus, ezért nem minden címnél garantált a megfelelő borító vagy leírás. A TMDB-kulcs továbbra is szükséges.
+
+
+## v40 – fix Videa-hosszszűrő
+
+- A Videa nézetben nincs választható hosszszűrő: kizárólag a 30 percnél hosszabb, ismert időtartamú videók jelennek meg.
+- Az ismeretlen hosszúságú és a 30 perces vagy rövidebb videók rejtve maradnak.
+
+
+### v41 – Magyar nyelvű ajánlóleírások
+A „Mit nézzek ma?” ajánló a filmeknél és sorozatoknál megpróbál az alkalmazás nyelvén leírást betölteni. Elsőként a TMDB lokalizált ismertetőjét használja, hiány esetén a Wikidata/Wikipédia megfelelő nyelvű szócikkét próbálja meg. Ha nincs magyar leírás, nem készít kitalált fordítást.
+
+
+### v42 – Videa hosszszűrés
+A Videa-felületen automatikusan csak a legalább 20 perces, ismert hosszúságú videók jelennek meg. A szolgáltató teljes találatszáma nem jelenik meg; helyette a szűrt, releváns videók száma látható.
+
+
+### v43 – Videa-kártyakattintás
+A Videa-kártyára kattintás eseményét a böngésző navigációja előtt elfogjuk, és a Popcorn saját beágyazott lejátszóját nyitjuk meg. Ha egy feltöltő letiltotta a beágyazást, a lejátszás ettől még nem garantálható.
+
+
+### v44 – Egységes film-adatlapok és biztonságos metaadat-egyeztetés
+Az Internet Archive-filmek adatlapján kompakt borító, egységes lejátszóelrendezés, leírás és egyezés esetén előzetes jelenik meg. TMDB-adatot csak IMDb-azonosító vagy szigorú cím- és év-egyezés alapján vesz át; bizonytalan egyezésnél nem társít másik filmhez adatlapot. A magyar leírást próbálja először betölteni.

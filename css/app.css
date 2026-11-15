@@ -721,3 +721,17 @@ img,video,iframe{max-width:100%}
 .videa-custom-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 2px}
 .videa-custom-controls input[type=range]{flex:1;min-width:140px;accent-color:var(--accent,#a78bfa)}
 .videa-custom-controls .note{margin:0;white-space:nowrap}
+
+
+/* v44 – egységes film-adatlap és kompakt borító */
+.media-detail{display:flex;flex-direction:column;gap:18px}
+.media-title-row{display:flex;align-items:center;gap:14px;min-width:0}
+.media-poster-mini{width:76px;height:114px;flex:0 0 76px;object-fit:cover;border-radius:10px;background:var(--surface-2);box-shadow:var(--shadow)}
+.media-title-copy{min-width:0}
+.media-title-copy h2{font:800 24px/1.15 var(--font-display);margin:0 0 9px;overflow-wrap:anywhere}
+.media-main-player{width:100%;max-width:100%;margin:0}
+.media-main-player video{display:block;width:100%;max-height:min(68vh,680px);aspect-ratio:16/9;background:#000;object-fit:contain;border-radius:14px}
+.media-detail .summary{margin:0}
+@media(max-width:520px){.media-poster-mini{width:64px;height:96px;flex-basis:64px}.media-title-copy h2{font-size:20px}}
+
+.home-resume-poster{width:76px;height:114px;object-fit:cover;aspect-ratio:2/3;border-radius:10px;flex:0 0 76px}

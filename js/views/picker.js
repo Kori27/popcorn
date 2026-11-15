@@ -50,6 +50,50 @@ async function ensureImage(item) {
   return item.img;
 }
 
+/** Try to show picker descriptions in the app language. Prefer TMDB's localized overview;
+ * if it is missing, resolve the IMDb ID through Wikidata and use the matching Wikipedia article. */
+const PICK_SUMMARIES = new Map();
+async function localPickSummary(it) {
+  if (!it || state.lang === 'en' || it.summary) return it?.summary || '';
+  const key = `${it.kind}:${it.id}:${state.lang}`;
+  if (PICK_SUMMARIES.has(key)) return PICK_SUMMARIES.get(key);
+  const task = (async () => {
+    try {
+      if (it.kind === 'tv') {
+        const show = await getShow(it.id);
+        if (show) {
+          const localized = await localSummary(show);
+          if (localized?.text) return localized.text;
+        }
+        return '';
+      }
+      if (tmdbKey() && /^\d+$/.test(String(it.id))) {
+        const localized = await tmdb(`/movie/${it.id}?language=${TLANG()}`, 7 * DAY);
+        if (localized?.overview) return localized.overview;
+        const english = await tmdb(`/movie/${it.id}?language=en-US`, 7 * DAY);
+        const imdb = localized?.imdb_id || english?.imdb_id;
+        if (imdb) {
+          const q = `SELECT ?film WHERE { ?film wdt:P345 "${imdb.replace(/"/g, '\\"')}". } LIMIT 1`;
+          const rows = await api(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`, 14 * DAY,
+            d => d.results.bindings.map(b => b.film.value.split('/').pop()));
+          if (rows[0]) {
+            const film = await getFilm(rows[0]);
+            if (film?.extract) return film.extract;
+          }
+        }
+      } else if (/^Q\d+$/.test(String(it.id))) {
+        const film = await getFilm(it.id);
+        if (film?.extract) return film.extract;
+      }
+    } catch {}
+    return '';
+  })();
+  PICK_SUMMARIES.set(key, task);
+  const result = await task;
+  if (result) it.summary = result;
+  return result;
+}
+
 /* ---------- helpers ---------- */
 const RARITY = [[8.5, 'legend', 'Legendás'], [7.8, 'epic', 'Epikus'], [7, 'rare', 'Ritka'], [0, 'common', 'Gyakori']];
 const rarityOf = it => RARITY.find(([min]) => it.rating >= min);
@@ -140,6 +184,7 @@ async function startSpin() {
     s.running = false; s.done = true;
     placeStrip(s, false);   // make sure the winner sits under the marker even if the animation could not run
     await ensureImage(s.win);
+    if (state.lang !== 'en') await localPickSummary(s.win);
     if (PICK.spin !== s || !$('#spinResult')) return;
     $('#spinResult').innerHTML = spinResult(s.win);
     const b = $('[data-pspin]'); if (b) { b.disabled = false; b.textContent = tr('Újra pörgetés'); }

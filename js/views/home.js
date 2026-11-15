@@ -6,7 +6,7 @@ function videaHomeSections() {
   const want = Object.entries(state.videaWant || {}).map(([id, item]) => ({ id, ...item }));
   const resume = last ? `<section class="videa-home-section"><div class="sec-head"><h2>Jelenleg ezt nézed</h2><span class="count">Folytatás</span></div>
     <div class="videa-resume">
-      ${last.thumbnail ? `<img src="${esc(last.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}
+      ${last.thumbnail ? `<img class="home-resume-poster" src="${esc(last.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph home-resume-poster">Videa</div>'}
       <div class="videa-resume-info"><b>${esc(last.title || 'Videa-videó')}</b>
         <span class="meta">${fmtVideaTime(last.position || 0)}${last.duration ? ' / ' + fmtVideaTime(last.duration) : ''}</span>
         <div class="videa-progress"><span style="width:${Math.max(0,Math.min(100, last.duration ? (last.position/last.duration)*100 : 0))}%"></span></div>
