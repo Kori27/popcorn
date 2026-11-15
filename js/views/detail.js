@@ -130,6 +130,7 @@ function renderSheetInner() {
         <h2>${esc(s.name)}</h2>${sheetHu && sheetHu !== s.name ? `<div class="note" style="color:var(--fg)">${tr('Helyi cím')}: ${esc(sheetHu)}</div>` : ''}<div class="note">${esc([years, s.network].filter(Boolean).join(' · '))}</div>
         <div class="facts">${facts}</div>
         <div class="actions"><button class="btn ${followed ? 'soft' : 'primary'}" data-follow>${followed ? ICON.check + tr('A listádon') : ICON.plus + tr('Listára teszem')}</button>
+          ${favBtn('tv:' + s.id, { kind: 'tv', ref: s.id, title: sheetHu || s.name, img: s.img, year: (s.premiered || '').slice(0, 4), genres: s.genres })}
           <button class="btn ghost" data-where>${tr('Hol nézhető?')}</button></div>
       </div></div>
       ${rateWidget('tv:' + s.id, { kind: 'tv', ref: s.id, title: sheetHu || s.name, img: s.img })}

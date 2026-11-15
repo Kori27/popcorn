@@ -67,7 +67,8 @@ function movieActions(key, meta) {
   const st = state.movies[key]?.status;
   return `<div class="actions" data-mvpanel="${esc(key)}">
     <button class="btn ${st === 'want' ? 'soft' : st ? 'ghost' : 'primary'}" data-mvstatus="${esc(key)}|want" aria-pressed="${st === 'want'}">${st === 'want' ? ICON.check : ICON.plus}${tr('Megnézendő')}</button>
-    <button class="btn ${st === 'seen' ? 'soft' : 'ghost'}" data-mvstatus="${esc(key)}|seen" aria-pressed="${st === 'seen'}">${ICON.check}${tr(st === 'seen' ? 'Megnézve' : 'Megnéztem')}</button></div>`;
+    <button class="btn ${st === 'seen' ? 'soft' : 'ghost'}" data-mvstatus="${esc(key)}|seen" aria-pressed="${st === 'seen'}">${ICON.check}${tr(st === 'seen' ? 'Megnézve' : 'Megnéztem')}</button>
+    ${favBtn(key, meta)}</div>`;
 }
 function setMovieStatus(key, status) {
   const cur = state.movies[key], meta = MOVIE_META[key] || cur;
@@ -108,7 +109,7 @@ async function openWikiFilm(qid, push = true) {
   catch { if (location.hash === '#wfilm-' + qid) sh.querySelector('.sheet-body').innerHTML = errorBox(FILM_ERR); return; }
   if (location.hash !== '#wfilm-' + qid) return;
   const key = 'wd:' + qid, title = pickLang(f.labels), orig = f.labels.en && f.labels.en !== title ? f.labels.en : '';
-  const meta = { kind: 'wd', ref: qid, title, img: f.img, year: f.year, runtime: f.runtime, imdb: f.imdb };
+  const meta = { kind: 'wd', ref: qid, title, img: f.img, year: f.year, runtime: f.runtime, imdb: f.imdb, genres: f.genreNames };
   const wikiUrl = f.page ? `https://${f.wiki}.m.wikipedia.org/wiki/${encodeURIComponent(f.page.replace(/ /g, '_'))}` : null;
   sh.innerHTML = `${backdrop(f.img)}<div class="sheet-bar">${closeBtnHtml()}${wikiUrl ? `<a class="iconbtn" href="${esc(wikiUrl)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a Wikipédián')}">${ICON.ext}</a>` : ''}</div>
     <div class="sheet-body">

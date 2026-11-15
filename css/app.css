@@ -657,3 +657,34 @@ img,video,iframe{max-width:100%}
 .pick-card.r-legend .pw{box-shadow:0 0 0 2px var(--r-legend);border-radius:12px}
 .pick-card.r-epic .pw{box-shadow:0 0 0 2px var(--r-epic);border-radius:12px}
 @media (max-width:420px){.spin-win{grid-template-columns:96px 1fr}.duel{gap:6px}.vs{font-size:14px}}
+
+/* ---------- horizontal rails: one column width for grid and card (they overlapped), arrows + edge fade ---------- */
+.rail{--rail-w:clamp(112px,16vw,158px);grid-auto-columns:var(--rail-w)}
+.rail .card{width:auto;flex:none;min-width:0}
+@media(min-width:760px){.rail{--rail-w:158px}}
+@media(max-width:480px){.rail{--rail-w:116px;margin-right:calc(-1 * var(--gutter));padding-right:var(--gutter)}}
+.rail-wrap{position:relative}
+.rail-wrap.more-r .rail{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent)}
+.rail-wrap.more-l .rail{-webkit-mask-image:linear-gradient(90deg,transparent,#000 64px);mask-image:linear-gradient(90deg,transparent,#000 64px)}
+.rail-wrap.more-l.more-r .rail{-webkit-mask-image:linear-gradient(90deg,transparent,#000 64px,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,transparent,#000 64px,#000 calc(100% - 64px),transparent)}
+.rail-nav{display:none;position:absolute;top:calc(var(--rail-top,110px) - 22px);z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--fg);box-shadow:0 8px 24px -8px rgba(0,0,0,.5);cursor:pointer;place-items:center;backdrop-filter:blur(8px)}
+.rail-nav svg{width:22px;height:22px}
+.rail-nav.next svg{transform:scaleX(-1)}
+.rail-nav.prev{left:-6px}.rail-nav.next{right:-6px}
+@media(hover:hover) and (pointer:fine){
+  .rail-wrap.more-l .rail-nav.prev,.rail-wrap.more-r .rail-nav.next{display:grid}
+  .rail-nav:hover{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+}
+
+/* ---------- favourites ---------- */
+.fav-btn{background:var(--surface-2);color:var(--fg)}
+.fav-btn svg{transition:transform .2s ease}
+.fav-btn.on{background:color-mix(in srgb,#ff4d6d 16%,transparent);color:#ff4d6d}
+.fav-btn.on svg,.fav-x.on svg{fill:currentColor}
+.fav-btn.on svg{animation:favpop .35s ease}
+@keyframes favpop{50%{transform:scale(1.3)}}
+.fav-x.on{color:#ff4d6d;border-color:color-mix(in srgb,#ff4d6d 40%,transparent);background:color-mix(in srgb,#ff4d6d 12%,transparent)}
+.card .meta.because{color:#ff4d6d;font-weight:600}
+@media (prefers-reduced-motion:reduce){.fav-btn.on svg{animation:none}}
+.pw img.wide-img,.spin-tile img.wide-img,.swipe-img img.wide-img,.duel-card img.wide-img,.spin-win-img img.wide-img{object-fit:contain;background:var(--surface-2);padding:10px}

@@ -282,7 +282,13 @@ const I18N_ROWS = [
     'Hungarian audio: RTL+, TV2 Play, Médiaklikk and Filmio show almost everything in Hungarian. No public database records dubbing, so this is a good approximation, not a guarantee.',
     'Ungarischer Ton: RTL+, TV2 Play, Médiaklikk und Filmio zeigen fast alles auf Ungarisch. Keine öffentliche Datenbank erfasst Synchronfassungen, daher ist das eine gute Näherung, keine Garantie.'],
   ['Ezekkel a szűrőkkel most nincs nézhető cím. Lazíts a szűrőkön.', 'Nothing matches these filters right now. Try loosening them.', 'Mit diesen Filtern gibt es gerade nichts. Lockere die Filter.'],
-  ['Magyar nyelvű közkincs film alig van az archívumban. Nézd meg a „Most nézhető” fület vagy a lenti magyar forrásokat.', 'There are hardly any public-domain films in Hungarian. Try the “Available now” tab or the Hungarian sources below.', 'Gemeinfreie Filme auf Ungarisch gibt es kaum. Schau unter „Jetzt verfügbar“ oder bei den ungarischen Quellen.']
+  ['Magyar nyelvű közkincs film alig van az archívumban. Nézd meg a „Most nézhető” fület vagy a lenti magyar forrásokat.', 'There are hardly any public-domain films in Hungarian. Try the “Available now” tab or the Hungarian sources below.', 'Gemeinfreie Filme auf Ungarisch gibt es kaum. Schau unter „Jetzt verfügbar“ oder bei den ungarischen Quellen.'],
+  ["Kedvenc", "Favourite", "Favorit"], ["Kedvencnek jelölöm", "Add to favourites", "Zu Favoriten"], ["Kedvenceim", "Favourites", "Favoriten"], ["Előző", "Previous", "Zurück"],
+  ["{name} lekerült a kedvenceid közül", "{name} removed from your favourites", "{name} aus deinen Favoriten entfernt"], ["{name} a kedvenceid közé került", "{name} added to your favourites", "{name} zu deinen Favoriten hinzugefügt"],
+  ["Ez is érdekelhet", "You might also like", "Das könnte dich interessieren"], ["Mert kedvelted: {t}", "Because you liked: {t}", "Weil dir gefiel: {t}"],
+  ["Jelölj meg több kedvencet, és pontosabb ajánlásokat kapsz.", "Mark more favourites to get better suggestions.", "Markiere mehr Favoriten, dann werden die Vorschläge genauer."],
+  ["Még nincs kedvenced", "No favourites yet", "Noch keine Favoriten"], ["Eltávolítás a kedvencek közül", "Remove from favourites", "Aus Favoriten entfernen"],
+  ["Nyiss meg egy sorozatot vagy filmet, és koppints a „Kedvencnek jelölöm” gombra. A kedvenceid alapján a Kezdőlapon ajánlunk hasonlókat.", "Open a series or film and tap “Add to favourites”. We suggest similar titles on Home based on your favourites.", "Öffne eine Serie oder einen Film und tippe auf „Zu Favoriten“. Auf der Startseite schlagen wir dann Ähnliches vor."],
 ];
 const I18N = { en: {}, de: {} };
 I18N_ROWS.forEach(([hu, en, de]) => { I18N.en[hu] = en; I18N.de[hu] = de; });

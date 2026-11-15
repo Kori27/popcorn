@@ -136,9 +136,11 @@ async function renderShows(v, alive) {
 
 function renderLibrary(v, alive) {
   const nShows = Object.keys(state.follows).length, nFilms = Object.keys(state.movies).length, nRates = Object.keys(state.ratings).length;
-  v.innerHTML = `<div class="seg" role="group">${[['shows', 'Sorozataim', nShows], ['films', 'Filmjeim', nFilms], ['ratings', 'Értékeléseim', nRates], ['stats', 'Statisztika', 0]]
+  const nFavs = Object.keys(state.favs).length;
+  v.innerHTML = `<div class="seg" role="group">${[['shows', 'Sorozataim', nShows], ['films', 'Filmjeim', nFilms], ['favs', 'Kedvenceim', nFavs], ['ratings', 'Értékeléseim', nRates], ['stats', 'Statisztika', 0]]
     .map(([k, l, n]) => `<button data-libseg="${k}" aria-pressed="${libSeg === k}">${tr(l)}${n ? ` (${n})` : ''}</button>`).join('')}</div>`;
-  if (libSeg === 'ratings') renderRatings(v);
+  if (libSeg === 'favs') renderFavs(v);
+  else if (libSeg === 'ratings') renderRatings(v);
   else if (libSeg === 'films') renderFilms(v, alive);
   else if (libSeg === 'stats') renderStats(v, alive);
   else renderShows(v, alive);

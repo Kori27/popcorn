@@ -5,7 +5,7 @@
 async function renderHome(v, alive) {
   const ids = Object.keys(state.follows);
   if (!ids.length) {
-    v.innerHTML = `<div id="featured"></div>${pickerCta()}
+    v.innerHTML = `<div id="featured"></div>${pickerCta()}${favHomeSection()}
       <div class="welcome-panel">
         <span class="welcome-kicker">${tr('A következő kedvenced itt kezdődik')}</span>
         <h2>${tr('Filmek és sorozatok. Egy helyen.')}</h2>
@@ -14,15 +14,15 @@ async function renderHome(v, alive) {
       </div>
       ${servicesSection()}
       <section><div class="sec-head"><h2>${tr('Népszerű sorozatok')}</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
-    loadPopular(alive); loadOnMine(alive);
+    loadPopular(alive); loadOnMine(alive); loadFavRecs(alive);
     return;
   }
-  v.innerHTML = `<div id="featured"></div>${pickerCta()}
+  v.innerHTML = `<div id="featured"></div>${pickerCta()}${favHomeSection()}
     <section><div class="sec-head"><h2>${tr('Folytasd')}</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
     <section><div class="sec-head"><h2>${tr('Hamarosan')}</h2><span class="count">${tr('következő 14 nap')}</span></div><div id="soon">${skelRows(2)}</div></section>
     ${servicesSection()}
     <section><div class="sec-head"><h2>${tr('Népszerű sorozatok')}</h2></div><div id="pop">${skelGrid(6)}</div></section>`;
-  loadOnMine(alive);
+  loadOnMine(alive); loadFavRecs(alive);
   let data;
   try { data = await pool(ids, 4, async id => ({ show: state.follows[id], eps: await getEps(id) || [] })); }
   catch { if (alive()) { $('#next').innerHTML = errorBox(NET_ERR); $('#soon').innerHTML = ''; } return; }

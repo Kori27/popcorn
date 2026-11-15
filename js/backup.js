@@ -1,7 +1,7 @@
 // Popcorn · Backup to a JSON file and restore from it (e.g. when changing phones).
 'use strict';
 
-const BACKUP_FIELDS = ['follows', 'watched', 'ratings', 'movies', 'services', 'theme', 'lang', 'notify'];
+const BACKUP_FIELDS = ['follows', 'watched', 'ratings', 'movies', 'favs', 'services', 'theme', 'lang', 'notify'];
 const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
 
 function exportBackup() {
@@ -27,11 +27,12 @@ async function importBackup(file) {
   const watched = Object.fromEntries(Object.entries(d.watched).filter(([, w]) => isObj(w)));
   const ratings = isObj(d.ratings) ? Object.fromEntries(Object.entries(d.ratings).filter(([, r]) => isObj(r) && r.stars >= 1 && r.stars <= 5)) : {};
   const movies = isObj(d.movies) ? Object.fromEntries(Object.entries(d.movies).filter(([, m]) => isObj(m) && (m.status === 'want' || m.status === 'seen'))) : {};
+  const favs = isObj(d.favs) ? Object.fromEntries(Object.entries(d.favs).filter(([, f]) => isObj(f) && typeof f.title === 'string')) : {};
   const when = b.exported ? fmtDate(String(b.exported).slice(0, 10)) : '?';
   const ok = confirm(tr('Visszaállítod a {date} napon készült mentést?\n{a} sorozat, {b} film, {c} értékelés.\nA mostani adataid helyére kerül.',
     { date: when, a: Object.keys(follows).length, b: Object.keys(movies).length, c: Object.keys(ratings).length }));
   if (!ok) return;
-  Object.assign(state, { follows, watched, ratings, movies });
+  Object.assign(state, { follows, watched, ratings, movies, favs });
   if (Array.isArray(d.services)) state.services = d.services.filter(s => SERVICES.some(x => x.id === s));
   if (isObj(d.theme)) state.theme = Object.assign({}, state.theme, d.theme);
   if (['hu', 'en', 'de'].includes(d.lang)) state.lang = d.lang;

@@ -279,3 +279,8 @@ document.addEventListener('keydown', e => {
   if (!history.state?.picker || PICK.mode !== 'swipe' || !$('#swipeCard')) return;
   if (e.key === 'ArrowRight') swipeDecide(true); else if (e.key === 'ArrowLeft') swipeDecide(false);
 });
+// Wikipedia sometimes only has a landscape logo or still for a film: show it whole instead of a cropped strip
+document.addEventListener('load', e => {
+  const img = e.target;
+  if (img.tagName === 'IMG' && img.closest('.pw,.spin-tile,.swipe-img,.duel-card,.spin-win-img') && img.naturalWidth > img.naturalHeight * 0.9) img.classList.add('wide-img');
+}, true);

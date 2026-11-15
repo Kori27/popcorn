@@ -215,3 +215,8 @@ A Kezdőlapon és a „Nézd most” fül tetején lévő gombbal nyílik. Elős
 A megnézett címek is megjelennek, de „Már megnézve” (film) vagy „Már nézted” (sorozat, ha van kipipált része) jelzéssel. Források: sorozatok a TVmaze-ből (népszerű, 7 feletti értékelésű címek), filmek TMDB-kulccsal a TMDB népszerű filmjeiből, kulcs nélkül a Wikidatából (kb. 500 ismert film magyar címmel, poszter a Wikipédiából). Az ajánlás a kedvelt és elutasított címek műfajaiból számolt súlyok alapján történik.
 
 **Előzetesek:** az app YouTube oEmbed-del ellenőrzi, hogy a TMDB-ben szereplő videó létezik-e még; a törölt videókat átugorja, és a következő elérhetőt (lehetőleg magyart) mutatja.
+
+## 12. Kedvencek
+
+- A sorozatok és filmek adatlapján a **♥ Kedvencnek jelölöm** gombbal kedvencet jelölhetsz. A lista a **Listám → Kedvenceim** alatt van, és a fiókkal szinkronizálódik, illetve a mentésbe is bekerül.
+- A Kezdőlap **Ez is érdekelhet** sora a kedvencek műfajai alapján ajánl (a legújabb kedvenc számít a legtöbbet). Kulccsal a filmekhez a TMDB saját „hasonló filmek” listáját is használja. A kártyán ♥ jelzi, melyik kedvenced miatt kaptad az ajánlást. A már követett, megnézett vagy kedvelt címeket kihagyja.

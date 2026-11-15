@@ -9,6 +9,34 @@ applyStaticI18n();
 const syncPane = () => document.body.classList.toggle('pane-open', !$('#sheet').hidden);
 new MutationObserver(syncPane).observe($('#sheet'), { attributes: true, attributeFilter: ['hidden'] });
 syncPane();
+// horizontal rails: fade + arrow buttons where more cards are hidden (arrows only with a mouse)
+function wireRail(rail) {
+  rail.dataset.rail = '1';
+  const wrap = document.createElement('div');
+  wrap.className = 'rail-wrap';
+  rail.before(wrap);
+  wrap.append(rail);
+  const btn = dir => {
+    const b = document.createElement('button');
+    b.className = 'rail-nav ' + (dir < 0 ? 'prev' : 'next');
+    b.type = 'button'; b.innerHTML = ICON.back; b.setAttribute('aria-label', tr(dir < 0 ? 'Előző' : 'Következő'));
+    b.addEventListener('click', e => { e.stopPropagation(); rail.scrollBy({ left: dir * Math.max(200, rail.clientWidth * 0.8), behavior: 'smooth' }); });
+    wrap.append(b);
+  };
+  btn(-1); btn(1);
+  const update = () => {
+    wrap.classList.toggle('more-l', rail.scrollLeft > 4);
+    wrap.classList.toggle('more-r', rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4);
+    const img = rail.querySelector('.poster,.pw,.poster-ph');
+    if (img) wrap.style.setProperty('--rail-top', (img.offsetTop + img.offsetHeight / 2) + 'px');
+  };
+  rail.addEventListener('scroll', update, { passive: true });
+  new ResizeObserver(update).observe(rail);
+  rail.addEventListener('load', update, true);
+  update();
+}
+new MutationObserver(() => document.querySelectorAll('.rail:not([data-rail])').forEach(wireRail))
+  .observe(document.body, { childList: true, subtree: true });
 updateOnline();
 updateBadge();
 syncWorkerData();

@@ -1,10 +1,10 @@
 // Popcorn · Accounts: Firebase sign-in (Google or e-mail + password) and cloud sync of the user's own data.
-// Synced: series list, watched episodes, ratings, films, services. Theme, language and the TMDB key stay per device.
+// Synced: series list, watched episodes, ratings, films, favourites, services. Theme, language and the TMDB key stay per device.
 // The Firebase SDK is loaded only when a project is configured (js/firebase-config.js) and the user needs it.
 'use strict';
 
 const FB_VERSION = '10.12.2';
-const SYNC_FIELDS = ['follows', 'watched', 'ratings', 'movies', 'services'];
+const SYNC_FIELDS = ['follows', 'watched', 'ratings', 'movies', 'favs', 'services'];
 const acct = { ready: false, loading: null, user: null, status: 'off', error: '', lastSync: 0, ref: null, unsub: null, lastPushed: '', timer: 0 };
 const fbConfigured = () => !!(window.FIREBASE_CONFIG?.apiKey && window.FIREBASE_CONFIG?.projectId);
 const DEVICE_ID = (() => {
@@ -17,7 +17,7 @@ const DEVICE_ID = (() => {
 const localData = () => JSON.parse(JSON.stringify(Object.fromEntries(SYNC_FIELDS.map(k => [k, state[k] ?? (k === 'services' ? [] : {})]))));
 /** Union of two data sets, used once per sign-in so nothing from either side is lost. */
 function mergeData(a, b) {
-  const out = { follows: { ...(b.follows || {}), ...(a.follows || {}) }, watched: {}, ratings: { ...(b.ratings || {}) }, movies: { ...(b.movies || {}) },
+  const out = { follows: { ...(b.follows || {}), ...(a.follows || {}) }, watched: {}, ratings: { ...(b.ratings || {}) }, movies: { ...(b.movies || {}) }, favs: { ...(b.favs || {}), ...(a.favs || {}) },
     services: [...new Set([...(a.services || []), ...(b.services || [])])] };
   const real = t => (t > 1e12 ? t : Infinity);
   for (const sid of new Set([...Object.keys(a.watched || {}), ...Object.keys(b.watched || {})])) {
