@@ -5,6 +5,10 @@
 try { const t = sessionStorage.getItem('sn.tab'); if (TITLES[t]) tab = t; } catch {}
 document.querySelectorAll('.tab').forEach(b => b.dataset.tab === tab ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
 applyStaticI18n();
+// lets the layout make room for the detail pane only while it is open (wide screens)
+const syncPane = () => document.body.classList.toggle('pane-open', !$('#sheet').hidden);
+new MutationObserver(syncPane).observe($('#sheet'), { attributes: true, attributeFilter: ['hidden'] });
+syncPane();
 updateOnline();
 updateBadge();
 syncWorkerData();

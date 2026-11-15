@@ -469,3 +469,62 @@ section{gap:14px}
 .acct-status.err{color:var(--warn)}
 .avatar{width:46px;height:46px;border-radius:50%;flex:none;object-fit:cover;display:grid;place-items:center;background:var(--accent);color:var(--accent-fg);font:700 19px/1 var(--font-display)}
 .linkbtn.danger{color:var(--warn);align-self:flex-start;font-size:13px}
+
+/* ===== Responsive layout: phone → tablet → laptop → large monitor ===== */
+:root{--gutter:16px; --rail:0px}
+@media (max-width:480px){:root{--gutter:14px}}
+@media (min-width:760px){:root{--gutter:28px}}
+main{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+.top-inner{padding-left:0;padding-right:0}
+.top{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+/* edge-to-edge scrollers line up with the page margin instead of sticking out */
+.filters,.rail{margin-inline:calc(-1 * var(--gutter));padding-inline:var(--gutter);scroll-padding-inline:var(--gutter)}
+.sheet{overflow-x:hidden}
+img,video,iframe{max-width:100%}
+.hero{min-width:0}
+.hero h2,.feature b,.welcome-panel h2{overflow-wrap:anywhere}
+
+/* Tablet and up: detail pane on the right, but only while something is open */
+@media (min-width:900px){
+  body{padding-right:0}
+  body.pane-open{padding-right:var(--pane)}
+  .tabbar{right:0}
+  body.pane-open .tabbar{right:var(--pane)}
+  .toast{left:50%}
+  body.pane-open .toast{left:calc((100% - var(--pane)) / 2)}
+  .sheet{box-shadow:-24px 0 48px -32px rgba(0,0,0,.6)}
+}
+
+/* Laptop and desktop: side navigation instead of the bottom bar */
+@media (min-width:1100px){
+  :root{--rail:236px; --pane:min(40vw,620px)}
+  body{padding-left:var(--rail)}
+  .tabbar{top:0;bottom:0;left:0;right:auto!important;width:var(--rail);height:auto;border-top:0;border-right:1px solid var(--line);
+    padding:22px 14px 24px;display:flex;flex-direction:column;gap:22px;background:color-mix(in srgb,var(--surface) 75%,transparent)}
+  .tabbar::before{content:"POPCORN";display:flex;align-items:center;gap:10px;padding:6px 14px 0;font:800 19px/1 var(--font-display);letter-spacing:.12em;color:var(--fg)}
+  .tabbar-inner{display:flex;flex-direction:column;gap:4px;height:auto;max-width:none;margin:0;width:100%}
+  .tab{flex-direction:row;justify-content:flex-start;gap:14px;height:48px;padding:0 14px;border-radius:14px;font-size:14.5px;font-weight:600;transition:background .15s,color .15s}
+  .tab svg{width:22px;height:22px}
+  .tab[aria-current="page"]::before{inset:0;top:0;width:auto;height:auto;border-radius:14px}
+  .tab[aria-current="page"] svg{transform:none}
+  .tab:not([aria-current]):hover{background:color-mix(in srgb,var(--fg) 6%,transparent);color:var(--fg)}
+  .tab .badge{position:static;margin-left:auto}
+  /* the header shows the page title; the brand lives in the side bar */
+  .top h1{font-size:30px;letter-spacing:-.02em;color:var(--fg)}
+  .top h1::before,.top h1::after{display:none}
+  main{padding-bottom:56px}
+  .toast{bottom:28px;left:calc(var(--rail) + (100% - var(--rail)) / 2)}
+  body.pane-open .toast{left:calc(var(--rail) + (100% - var(--rail) - var(--pane)) / 2)}
+  .offline{left:var(--rail)}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 16px}
+  .tiles{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+  .feature{min-height:360px;max-height:460px}
+}
+@media (min-width:1600px){
+  :root{--rail:260px; --pane:min(36vw,680px)}
+  main,.top-inner{max-width:1320px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+}
+/* short landscape phones: keep the bottom bar slim */
+@media (max-height:500px) and (max-width:1099px){:root{--tabbar:58px}.tab span{font-size:10.5px}}
+.backdrop{transform:none!important;inset:0 0 auto 0}

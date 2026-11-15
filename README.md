@@ -35,7 +35,7 @@ További jellemzők:
 
 - **Telepíthető** a kezdőképernyőre (Android és iOS), saját ikonnal, teljes képernyőn fut.
 - **Offline is indul**: az app váza a Service Worker gyorsítótárából töltődik, a már letöltött adatok elérhetők; internet nélkül figyelmeztető sáv jelenik meg.
-- **Reszponzív**: telefonon alsó menüsáv és teljes képernyős adatlap, 900 px-nél szélesebb kijelzőn (tablet) kétoszlopos elrendezés.
+- **Reszponzív, minden méretre**: telefonon alsó menüsáv és teljes képernyős adatlap; tableten (900 px felett) az adatlap jobb oldali panelként nyílik, de csak amíg meg van nyitva; laptopon és monitoron (1100 px felett) bal oldali menü, nagyobb poszterrács és szélesebb tartalom. Semmi nem lóg ki oldalra, a szűrő- és görgetősávok a lapszélhez igazodnak.
 - **Megjelenés:** lágy kiemelőszínű háttérderengés, színes aktív fülválasztók, poszterek értékelés-jelvénnyel és finom mozgással, elmosott borító- vagy jelenetkép az adatlapok tetején.
 - **Szűrők** minden listán: kompakt legördülő választók, az aktív szűrő kiemelve, „Alaphelyzet” gombbal; a beállított szűrőket az app megjegyzi.
 - **Értesítések**: a háttérben futó ellenőrzés (Periodic Background Sync) új részt jelez a követett sorozatokból, ahol a platform támogatja.
@@ -199,3 +199,5 @@ Bejelentkezés után a sorozatlista, a megnézett részek, az értékelések, a 
 5. **Firestore Database → Create database** (európai hely, *production mode*), majd a **Rules** fülre másold be a `firestore.rules` tartalmát, és *Publish*.
 
 Ismert korlát: ha két eszközön egyszerre, internet nélkül módosítasz, a később szinkronizált eszköz változata nyer.
+
+**Ingyenes magyar források:** a Médiaklikk, az RTL+, a TV2 Play és a Filmio külső linkként nyílik. Az RTL+ és a TV2 Play tiltja a beágyazást (`X-Frame-Options: SAMEORIGIN`); a Médiaklikk lejátszója beágyazva nem indul el, a Filmio pedig bejelentkezést kér, ami beágyazott ablakban (harmadik féltől származó sütik, Google-belépés) nem megbízható.

@@ -21,10 +21,11 @@ function whereSection(s) {
     <div class="where">${rows.join('')}</div>
     ${known ? '' : `<p>${tr('Az előfizetéses egyezést az eredeti csatorna alapján becsüljük. Magyarországon egy sorozat néha máshol fut, ezt a JustWatch pontosan mutatja.')}</p>`}</div>`;
 }
+/** Wide screens: the detail pane only takes space while something is open. */
 function renderPlaceholder() {
   sheetShow = null;
-  $('#sheet').hidden = false;
-  $('#sheet').innerHTML = `<div class="placeholder"><div><b>${tr('Válassz egy sorozatot')}</b>${tr('Koppints bármelyik sorozatra, és itt jelenik meg az adatlapja.')}</div></div>`;
+  $('#sheet').hidden = true;
+  $('#sheet').innerHTML = '';
   document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
 }
 function markActive(id) { document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', wide.matches && +c.dataset.open === id)); }
