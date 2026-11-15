@@ -112,14 +112,14 @@ const tmdbCard = (x, type) => {
     <span class="pw">${x.poster_path ? `<img class="poster" src="${TIMG}w342${esc(x.poster_path)}" alt="" loading="lazy">` : `<div class="poster-ph">${esc(title)}</div>`}
     ${x.vote_count > 20 ? `<span class="score">★ ${x.vote_average.toFixed(1)}</span>` : ''}</span>
     ${type === 'movie' && state.movies['mv:' + x.id] ? `<span class="flag">${ICON.check}</span>` : ''}
-    <span class="name">${esc(title)}</span><span class="meta">${esc(date.slice(0, 4))}</span></button>`;
+    <span class="name">${esc(title)}</span><span class="meta">${esc(date.slice(0, 4))}</span>${x._offers?.length ? `<span class="meta offer">${esc(offerText(x))}</span>` : ''}</button>`;
 };
 /** Big banner for the first result, using TMDB's wide scene image. */
 const featureCard = (x, type) => {
   const title = x.title || x.name, date = x.release_date || x.first_air_date || '';
   return `<button class="feature" ${type === 'movie' ? `data-movie="${x.id}"` : `data-tmdbtv="${x.id}"`} aria-label="${esc(title)}" style="background-image:url('${TIMG}w780${esc(x.backdrop_path)}')">
     <span class="feature-text"><span class="kicker">${tr('Kiemelt')}</span><b>${esc(title)}</b>
-    <span class="feature-meta">${esc([date.slice(0, 4), x.vote_count > 20 ? '★ ' + x.vote_average.toFixed(1) : ''].filter(Boolean).join(' · '))}</span>
+    <span class="feature-meta">${esc([date.slice(0, 4), x.vote_count > 20 ? '★ ' + x.vote_average.toFixed(1) : '', offerText(x)].filter(Boolean).join(' · '))}</span>
     ${x.overview ? `<span class="feature-desc">${esc(x.overview)}</span>` : ''}</span></button>`;
 };
 
@@ -144,6 +144,7 @@ async function renderFree(body, alive) {
   if (!tmdbKey()) { body.innerHTML = noKeyPanel('Friss, ingyen nézhető filmek és sorozatok') + freeHuPanel(); return; }
   const type = fget('freeType', 'movie');
   body.innerHTML = `<p class="note">${tr('Valódi, új és népszerű filmek és sorozatok, amelyek Magyarországon most legálisan nézhetők: ingyen, reklámmal vagy az előfizetéseiden. Koppints egy címre: előzetes, és hogy melyik szolgáltatónál indíthatod.')}</p>
+    <p class="note">${tr('A filmek a szolgáltató saját oldalán vagy appjában indulnak (↗). Minden címet a friss magyarországi szolgáltató-adattal ellenőrzünk, de a kínálat gyorsan változhat.')}</p>
     ${fget('freeLang', '') === 'hudub' ? `<p class="note">${tr('Magyar hang: az RTL+, a TV2 Play, a Médiaklikk és a Filmio szinte mindent magyarul ad. Szinkron-adatot egyik nyilvános adatbázis sem tárol, ezért ez jó közelítés, nem garancia.')}</p>` : ''}
     <div id="freeFilters">${filterBar('free', freeFilterItems(type, []))}</div><div id="free">${skelGrid(6)}</div>${freeHuPanel()}`;
   FILTER_HANDLERS.free = () => { freePage = 1; renderFree(body, alive); };
@@ -158,26 +159,58 @@ const freeFilterItems = (type, genres) => [
   { id: 'freeHow', label: 'Hogyan', def: 'free|ads', options: HOW_OPTIONS() },
   { id: 'freeLang', label: 'Nyelv', def: '', options: LANG_OPTIONS },
   { id: 'freeSort', label: 'Rendezés', def: 'popular', options: FREE_SORTS }];
+/** Offers that match the chosen filters, taken from TMDB's live Hungarian provider data. */
+function matchingOffers(hu) {
+  if (!hu || typeof hu !== 'object') return [];
+  const how = fget('freeHow', 'free|ads'), lang = fget('freeLang', '');
+  const mineOnly = how === 'mine' && state.services.length;
+  const groups = mineOnly ? ['flatrate', 'free', 'ads'] : (how === 'mine' ? 'free|ads' : how).split('|');
+  let list = groups.flatMap(g => (hu[g] || []).map(p => ({ name: p.provider_name, g })));
+  if (mineOnly) list = list.filter(p => { const k = providerService({ provider_name: p.name }); return k && state.services.includes(k); });
+  if (lang === 'hudub') list = list.filter(p => HU_LOCAL.test(p.name));
+  const seen = new Set();
+  return list.filter(p => !seen.has(p.name) && seen.add(p.name));
+}
+/** The discover index can be out of date, so every title is checked against its current provider list. */
+async function verifyFree(results, type) {
+  const checked = await pool(results, 5, async x => {
+    try { return { ...x, _offers: matchingOffers(await providersFor(type, x.id)) }; } catch { return { ...x, _offers: [] }; }
+  });
+  return checked.filter(x => x._offers.length);
+}
+let freeShown = 0;
 async function loadFree(alive, append) {
   const box = $('#free'); if (!box) return;
   const type = fget('freeType', 'movie');
+  if (!append) freeShown = 0;
   try {
-    const path = await freeDiscoverPath(freePage);
-    const d = path ? await tmdb(path, 12 * H) : { results: [], page: 1, total_pages: 1 };
-    if (!alive() || !$('#free')) return;
-    const cards = (d.results || []).map(x => tmdbCard(x, type)).join('');
+    let d, items = [], tries = 0;
+    for (;;) {
+      const path = await freeDiscoverPath(freePage);
+      d = path ? await tmdb(path, 12 * H) : { results: [], page: 1, total_pages: 1 };
+      items = await verifyFree(d.results || [], type);
+      if (!alive() || !$('#free')) return;
+      const last = d.page >= Math.min(d.total_pages || 1, 20);
+      if (items.length || last || ++tries >= 3) break;
+      freePage++;   // nothing on this page survived the check: look at the next one
+    }
+    freeShown += items.length;
     const grid = box.querySelector('.grid');
-    if (append && grid) grid.insertAdjacentHTML('beforeend', cards);
-    else if (d.results?.length) {
-      const top = d.results.find(x => x.backdrop_path);
+    if (append && grid) grid.insertAdjacentHTML('beforeend', items.map(x => tmdbCard(x, type)).join(''));
+    else if (items.length) {
+      const top = items.find(x => x.backdrop_path);
       box.innerHTML = (top ? featureCard(top, type) : '')
-        + `<div class="sec-head"><span class="count">${tr('{n} találat', { n: (d.total_results || 0).toLocaleString(LOC()) })}</span></div>
-           <div class="grid">${d.results.filter(x => x !== top).map(x => tmdbCard(x, type)).join('')}</div>`;
+        + `<div class="sec-head"><span class="count"></span></div>
+           <div class="grid">${items.filter(x => x !== top).map(x => tmdbCard(x, type)).join('')}</div>`;
     } else box.innerHTML = `<div class="empty"><h3>${tr('Nincs találat')}</h3><p>${tr('Ezekkel a szűrőkkel most nincs nézhető cím. Lazíts a szűrőkön.')}</p></div>`;
+    const count = box.querySelector('.count');
+    if (count) count.textContent = tr('{n} ellenőrzött cím', { n: freeShown });
     box.querySelector('.more')?.remove();
     if (d.page < Math.min(d.total_pages || 1, 20)) box.insertAdjacentHTML('beforeend', `<button class="btn ghost more" data-freemore style="margin-top:14px">${tr('Továbbiak')}</button>`);
   } catch (e) { if (alive()) box.innerHTML = keyError(e); }
 }
+const OFFER_LABEL = { free: 'ingyen', ads: 'reklámmal', flatrate: 'előfizetéssel' };
+const offerText = x => x._offers?.length ? `↗ ${x._offers.slice(0, 2).map(o => o.name).join(', ')} · ${tr(OFFER_LABEL[x._offers[0].g])}` : '';
 async function openTmdbTv(id) {
   toast(tr('Sorozat megnyitása…'));
   try {
