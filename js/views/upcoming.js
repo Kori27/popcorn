@@ -16,7 +16,7 @@ async function renderUpcoming(v, alive) {
       const items = all.filter(x => (where === 'all' || (where === 'mine' ? !!mine(x.show) : x.src === where)) && (!genre || (x.show.genres || []).includes(genre)));
       const bar = filterBar('upcoming', [
         { id: 'upWhere', label: 'Hol', def: 'all', options: [['all', 'Mindenhol'], ['web', 'Streaming'], ['US', 'Amerikai TV'], ['HU', 'Magyar TV'], ...(state.services.length ? [['mine', 'Az előfizetéseimen']] : [])] },
-        { id: 'upGenre', label: 'Műfaj', def: '', options: [['', 'Mind'], ...genres.map(g => [g, g])] }]);
+        { id: 'upGenre', label: 'Műfaj', def: '', options: [['', 'Mind'], ...genres.map(g => [g, genreName(g)])] }]);
       box.innerHTML = bar + (items.length
         ? `<p class="note">${tr('Új sorozatok és új évadok első részei a következő 7 napban: streaming, amerikai és magyar csatornák. {n} cím.', { n: items.length })}</p>` + groupByDay(items, false, true)
         : noMatch());

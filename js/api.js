@@ -33,9 +33,10 @@ const slimShow = s => s && ({
   premiered: s.premiered, ended: s.ended, genres: s.genres || [], rating: s.rating?.average ?? null,
   summary: strip(s.summary), runtime: s.runtime || s.averageRuntime || null, url: s.url, lang: s.language, weight: s.weight || 0, imdb: s.externals?.imdb || null
 });
-const slimEp = e => ({ id: e.id, s: e.season, n: e.number, name: e.name, date: e.airdate, stamp: e.airstamp, rt: e.runtime });
+const slimEp = e => ({ id: e.id, s: e.season, n: e.number, name: e.name, date: e.airdate, stamp: e.airstamp, rt: e.runtime, sum: strip(e.summary) || '' });
 const getShow = id => api(`/shows/${id}`, DAY, slimShow);
-const getEps = id => api(`/shows/${id}/episodes`, 6 * H, a => a.map(slimEp));
+// "?specials=0" also gives the cache a new key, so episodes stored before plot summaries existed are fetched again
+const getEps = id => api(`/shows/${id}/episodes?specials=0`, 6 * H, a => a.map(slimEp));
 const getHuName = id => {
   const cc = { hu: ['HU'], de: ['DE', 'AT'], en: [] }[state.lang] || [];
   if (!cc.length) return Promise.resolve(null);

@@ -34,11 +34,16 @@ const wdEntities = ids => api(`${WD_API}?action=wbgetentities&ids=${ids.join('|'
 const wdLabels = ids => ids.length ? api(`${WD_API}?action=wbgetentities&ids=${ids.join('|')}&props=labels&languages=hu|en|de&format=json&origin=*`,
   30 * DAY, d => Object.fromEntries(Object.values(d.entities || {}).map(e => [e.id, Object.fromEntries(Object.entries(e.labels || {}).map(([k, x]) => [k, x.value]))]))) : Promise.resolve({});
 
+/** Searches the Wikipedia of the app's language and the English one, so local and original titles both work. */
 async function searchFilms(q) {
-  const w = state.lang;
-  const hits = await api(`https://${w}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q + ' film')}&gsrlimit=20&prop=pageimages|pageprops&piprop=thumbnail&pithumbsize=320&pilicense=any&ppprop=wikibase_item&format=json&formatversion=2&origin=*`,
-    6 * H, d => (d.query?.pages || []).sort((a, b) => a.index - b.index).map(p => ({ qid: p.pageprops?.wikibase_item, img: p.thumbnail?.source || null })).filter(x => x.qid));
-  if (!hits?.length) return [];
+  const wikis = state.lang === 'en' ? ['en'] : [state.lang, 'en'];
+  const lists = await Promise.all(wikis.map(w => api(`https://${w}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q + ' film')}&gsrlimit=20&prop=pageimages|pageprops&piprop=thumbnail&pithumbsize=320&pilicense=any&ppprop=wikibase_item&format=json&formatversion=2&origin=*`,
+    6 * H, d => (d.query?.pages || []).sort((a, b) => a.index - b.index).map(p => ({ qid: p.pageprops?.wikibase_item, img: p.thumbnail?.source || null })).filter(x => x.qid)).catch(() => [])));
+  // interleave the two result lists, local first, and drop duplicates
+  const seen = new Map();
+  for (let i = 0; i < 20; i++) lists.forEach(l => { const h = l[i]; if (h && !seen.has(h.qid)) seen.set(h.qid, h); else if (h && !seen.get(h.qid).img && h.img) seen.get(h.qid).img = h.img; });
+  const hits = [...seen.values()].slice(0, 30);
+  if (!hits.length) return [];
   const byId = new Map((await wdEntities(hits.map(h => h.qid))).map(e => [e.qid, e]));
   return hits.map(h => { const e = byId.get(h.qid); return e?.isFilm ? { ...e, img: h.img } : null; }).filter(Boolean);
 }

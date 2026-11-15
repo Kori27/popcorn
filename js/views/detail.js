@@ -53,8 +53,14 @@ async function openShow(id, push = true) {
     sheetSeason = p.next ? p.next.s : seasons[seasons.length - 1] ?? null;
     sheetTrailerNode = null;
     sheetProv = tmdbKey() ? undefined : 'nokey';
+    sheetLocal = { summary: undefined, eps: {} }; openEps = new Set();
     renderSheet();
     fillTrailer(tmdbKey() ? trailerForShow(show) : null, sheetHu || show.name);
+    localSummary(show).then(r => {
+      if (sheetShow?.id !== id) return;
+      sheetLocal.summary = r || null;
+      if (r) renderSheet();
+    });
     if (tmdbKey()) {
       const r = await resolveProviders(tmdbTvId(show).then(tid => providersFor('tv', tid)));
       if (sheetShow?.id !== id || location.hash !== '#sorozat-' + id) return;
@@ -80,6 +86,20 @@ function showSheet() {
   document.querySelectorAll('.card.active').forEach(c => c.classList.remove('active'));
 }
 let sheetTrailerNode = null;
+/** Local-language extras of the open series: summary, and per season the episode titles and plots. */
+let sheetLocal = { summary: undefined, eps: {} }, openEps = new Set();
+function loadSeasonLocal(season) {
+  if (season == null || season in sheetLocal.eps) return;
+  sheetLocal.eps[season] = null;   // loading
+  const id = sheetShow.id;
+  localEpisodes(sheetShow, season).then(r => {
+    if (sheetShow?.id !== id) return;
+    sheetLocal.eps[season] = r;
+    if (Object.keys(r.names).length || Object.keys(r.plots).length) renderSheet();
+  });
+}
+const epName = e => sheetLocal.eps[e.s]?.names?.[e.n] || e.name;
+const epPlot = e => sheetLocal.eps[e.s]?.plots?.[e.n] || e.sum || '';
 function renderSheet() {
   // keep the trailer element (and a playing video) across re-renders of the sheet
   const oldTrailer = document.querySelector('#sheet #trailerPanel');
@@ -87,6 +107,9 @@ function renderSheet() {
   renderSheetInner();
   const slot = document.querySelector('#sheet #trailerPanel');
   if (slot && sheetTrailerNode && sheetTrailerNode !== slot) slot.replaceWith(sheetTrailerNode);
+  // "Read more" only when the text is really cut off (a short summary fits in four lines on wide screens)
+  const sum = document.querySelector('#sheet .summary.clamp'), more = document.querySelector('#sheet [data-more]');
+  if (sum && more && sum.scrollHeight <= sum.clientHeight + 2) more.hidden = true;
 }
 function renderSheetInner() {
   const s = sheetShow, eps = regular(sheetEps), p = progressOf(s.id, sheetEps), followed = !!state.follows[s.id];
@@ -94,9 +117,12 @@ function renderSheetInner() {
   const inSeason = eps.filter(e => e.s === sheetSeason);
   const seasonAired = inSeason.filter(aired);
   const seasonAllWatched = seasonAired.length && seasonAired.every(e => isWatched(s.id, e.id));
-  const facts = [statusPill(s.status), s.rating ? `<span class="pill neutral">★ ${s.rating.toFixed(1)}</span>` : '', s.runtime ? `<span class="pill neutral">${s.runtime} perc</span>` : '', ...s.genres.slice(0, 3).map(g => `<span class="pill neutral">${esc(g)}</span>`)].join('');
+  loadSeasonLocal(sheetSeason);
+  const loc = sheetLocal.summary, genres = loc?.genres?.length ? loc.genres : s.genres.map(genreName);
+  const summaryText = loc?.text || s.summary, summaryLang = loc?.text ? state.lang : s.lang === 'Hungarian' ? 'hu' : 'en';
+  const facts = [statusPill(s.status), s.rating ? `<span class="pill neutral">★ ${s.rating.toFixed(1)}</span>` : '', s.runtime ? `<span class="pill neutral">${tr('{n} perc', { n: s.runtime })}</span>` : '', ...genres.slice(0, 3).map(g => `<span class="pill neutral">${esc(g)}</span>`)].join('');
   const years = s.premiered ? (s.ended ? `${s.premiered.slice(0, 4)}–${s.ended.slice(0, 4)}` : `${s.premiered.slice(0, 4)}–`) : '';
-  const nextLine = p.next ? `${tr('Következő')}: <span class="code">${code(p.next)}</span> · ${esc(p.next.name)}` : p.upcoming ? `${tr('Új rész')}: <span class="code">${code(p.upcoming)}</span> · ${fmtDate(p.upcoming.date)}` : '';
+  const nextLine = p.next ? `${tr('Következő')}: <span class="code">${code(p.next)}</span> · ${esc(epName(p.next))}` : p.upcoming ? `${tr('Új rész')}: <span class="code">${code(p.upcoming)}</span> · ${fmtDate(p.upcoming.date)}` : '';
   $('#sheet').innerHTML = `${backdrop(s.img)}<div class="sheet-bar">${closeBtnHtml()}
       ${s.url ? `<a class="iconbtn" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${tr('Megnyitás a TVmaze-en')}">${ICON.ext}</a>` : ''}</div>
     <div class="sheet-body">
@@ -108,7 +134,9 @@ function renderSheetInner() {
       </div></div>
       ${rateWidget('tv:' + s.id, { kind: 'tv', ref: s.id, title: sheetHu || s.name, img: s.img })}
       ${trailerPanel()}
-      ${s.summary ? `<div><p class="summary ${summaryOpen ? '' : 'clamp'}" lang="${s.lang === 'Hungarian' ? 'hu' : 'en'}">${esc(s.summary)}</p>${s.summary.length > 220 ? `<button class="linkbtn" data-more>${tr(summaryOpen ? 'Kevesebb' : 'Tovább olvasom')}</button>` : ''}</div>` : ''}
+      ${summaryText ? `<div><p class="summary ${summaryOpen ? '' : 'clamp'}" lang="${esc(summaryLang)}">${esc(summaryText)}</p>
+        <button class="linkbtn" data-more>${tr(summaryOpen ? 'Kevesebb' : 'Tovább olvasom')}</button>
+        ${loc?.src ? `<p class="note" style="margin-top:4px">${tr('Leírás: {src}', { src: loc.src })}</p>` : ''}</div>` : ''}
       <div class="stat"><div><b>${p.watched}</b><span>${tr('megnézett rész')}</span></div><div><b>${Math.max(p.aired - p.watched, 0)}</b><span>${tr('hátralévő rész')}</span></div><div><b>${seasons.length}</b><span>${tr('évad')}</span></div></div>
       ${nextLine ? `<div class="note" style="color:var(--fg)">${nextLine}</div>` : ''}
       ${whereSection(s)}
@@ -119,12 +147,15 @@ function renderSheetInner() {
         <div class="sec-head"><span class="label">${tr('{n}. évad', { n: sheetSeason })} · ${tr('{n} rész', { n: inSeason.length })}</span>
           ${seasonAired.length ? `<button class="btn small ${seasonAllWatched ? 'ghost' : 'soft'}" data-season="${seasonAllWatched ? 'off' : 'on'}">${tr(seasonAllWatched ? 'Jelölés visszavonása' : 'Egész évad megnézve')}</button>` : ''}</div>
         <div class="list">${inSeason.map(e => {
-          const a = aired(e), w = isWatched(s.id, e.id);
-          return `<div class="ep ${a ? '' : 'future'}"><span class="no">${e.n}.</span>
-            <div style="min-width:0"><div class="t">${esc(e.name)}</div><div class="d">${a ? fmtDate(e.date) : 'Megjelenik: ' + fmtDate(e.date)}${e.rt ? ` · ${e.rt} perc` : ''}</div></div>
-            <button class="check" data-ep="${s.id}:${e.id}" aria-pressed="${w}" ${a ? '' : 'disabled'} aria-label="${esc(code(e))} ${tr(w ? 'megnézve' : 'megjelölése megnézettként')}">${ICON.check}</button></div>`;
+          const a = aired(e), w = isWatched(s.id, e.id), open = openEps.has(e.id), plot = epPlot(e);
+          const plotLang = sheetLocal.eps[e.s]?.plots?.[e.n] ? state.lang : 'en';
+          return `<div class="ep ${a ? '' : 'future'}${open ? ' open' : ''}"><span class="no">${e.n}.</span>
+            <button class="ep-main" data-epinfo="${e.id}" aria-expanded="${open}" aria-label="${esc(code(e))} ${esc(epName(e))}: ${tr(open ? 'leírás elrejtése' : 'leírás megjelenítése')}">
+              <span class="t">${esc(epName(e))}</span><span class="d">${a ? fmtDate(e.date) : tr('Megjelenik: {d}', { d: fmtDate(e.date) })}${e.rt ? ` · ${tr('{n} perc', { n: e.rt })}` : ''}</span></button>
+            <button class="check" data-ep="${s.id}:${e.id}" aria-pressed="${w}" ${a ? '' : 'disabled'} aria-label="${esc(code(e))} ${tr(w ? 'megnézve' : 'megjelölése megnézettként')}">${ICON.check}</button>
+            ${open ? `<div class="ep-plot"${plot ? ` lang="${plotLang}"` : ''}>${plot ? esc(plot) : `<span class="note">${tr('Ehhez a részhez még nincs leírás.')}</span>`}</div>` : ''}</div>`;
         }).join('')}</div></section>` : `<p class="note">${tr('Ehhez a sorozathoz még nincsenek epizódadatok.')}</p>`}
-      <p class="note">${tr('Adatok: TVmaze. A leírások az adatbázisból származnak, többnyire angol nyelvűek.')}</p>
+      <p class="note">${tr(state.lang !== 'en' && !tmdbKey() ? 'Adatok: TVmaze és Wikipédia. Magyar epizódcímekhez és -leírásokhoz add meg a TMDB-kulcsot; addig ezek angolul jelennek meg.' : 'Adatok: TVmaze, Wikipédia és TMDB.')}</p>
     </div>`;
 }
 

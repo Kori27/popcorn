@@ -80,7 +80,11 @@ async function runSearch(alive) {
   }
   box.innerHTML = skelGrid(6);
   try {
-    const all = await searchShows(query), res = filterShows(all);
+    // TVmaze knows original (mostly English) titles; Wikipedia + Wikidata add matches by the local title
+    const [direct, local] = await Promise.all([searchShows(query).catch(() => []), searchShowsLocal(query).catch(() => [])]);
+    if (!direct.length && !local.length && !navigator.onLine) throw new Error('offline');
+    const ids = new Set(), all = [...local, ...direct].filter(s => s && !ids.has(s.id) && ids.add(s.id));
+    const res = filterShows(all);
     if (stale()) return;
     box.innerHTML = res.length
       ? `<div class="sec-head"><h2>${tr('Találatok')}</h2><span class="count">${tr('{n} sorozat', { n: res.length })}</span></div><div class="grid">${res.map(s => showCard(s)).join('')}</div>`

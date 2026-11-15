@@ -567,3 +567,15 @@ img,video,iframe{max-width:100%}
 .fmenu-head{font:700 13px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:12px 12px 8px;position:relative}
 .fmenu-head::before{content:"";position:absolute;left:50%;top:-2px;width:38px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
 .sheet-menu .fopt{padding:14px 14px;font-size:15.5px}
+
+/* episodes: tap the title to read what happens */
+.ep{grid-template-columns:auto minmax(0,1fr) auto}
+.ep-main{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;width:100%;border:0;background:none;padding:2px 0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ep-main .t{display:block;max-width:100%;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep-main .d{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ep-main .d::after{content:"";width:6px;height:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s;opacity:.8}
+.ep.open .ep-main .d::after{transform:rotate(225deg) translate(-1px,-1px)}
+.ep-main:hover .t{color:var(--accent)}
+.ep.open .ep-main .t{white-space:normal}
+.ep-plot{grid-column:1/-1;margin:2px 0 4px 40px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--fg) 5%,transparent);font-size:14px;line-height:1.55;color:var(--fg)}
+.ep.future .ep-main .t{color:var(--muted)}

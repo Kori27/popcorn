@@ -80,7 +80,7 @@ async function renderStats(v, alive) {
       ${undated ? `<p class="note">${tr('{n} korábbi jelölésnél nem ismert a dátum, ezek csak az összesítésben szerepelnek.', { n: fmtNum(undated) })}</p>` : ''}
       ${table}</div>
     ${topGenres.length ? `<div class="panel"><h3>${tr('Kedvenc műfajaid')}</h3><p>${tr('A megnézett részek száma alapján.')}</p>
-      <div class="hbars">${topGenres.map(([g, n]) => `<div class="hbar"><span>${esc(g)}</span><div class="track"><i style="width:${n / gMax * 100}%"></i></div><b>${tr('{n} rész', { n: fmtNum(n) })}</b></div>`).join('')}</div></div>` : ''}
+      <div class="hbars">${topGenres.map(([g, n]) => `<div class="hbar"><span>${esc(genreName(g))}</span><div class="track"><i style="width:${n / gMax * 100}%"></i></div><b>${tr('{n} rész', { n: fmtNum(n) })}</b></div>`).join('')}</div></div>` : ''}
     ${topShows.length ? `<section><div class="sec-head"><h2>${tr('Legtöbbet nézett sorozataid')}</h2></div><div class="list">${topShows.map(({ show, n, min }, i) => `<div class="row" data-open="${show.id}" style="cursor:pointer">
         ${show.img ? `<img class="thumb" src="${esc(show.img)}" alt="" loading="lazy">` : '<div class="thumb"></div>'}
         <div class="body"><div class="t1"><span class="code">#${i + 1}</span> ${esc(show.name)}</div><div class="t3">${tr('{n} rész', { n: fmtNum(n) })} · ${tr('{h} óra', { h: fmtNum(min / 60, 1) })}</div></div><span></span></div>`).join('')}</div></section>` : ''}`;

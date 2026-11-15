@@ -79,7 +79,7 @@ async function loadPopular(alive) {
     const featured = $('#featured');
     if (featured && list.length) {
       const pick = list.find(s => s.img) || list[0];
-      featured.innerHTML = `<button class="feature feature-home" data-open="${pick.id}" style="background-image:url('${esc(pick.img || '')}')" aria-label="${esc(pick.name)}"><span class="feature-text"><span class="kicker">${tr('Kiemelt ajánlat')}</span><b>${esc(pick.name)}</b><span class="feature-meta">${esc([year(pick), (pick.genres || []).slice(0, 2).join(' · '), pick.rating ? '★ ' + pick.rating : ''].filter(Boolean).join('  •  '))}</span><span class="feature-desc">${esc(pick.summary || tr('Fedezd fel a sorozatot'))}</span><span class="feature-cta">${ICON.play} ${tr('Adatlap megnyitása')}</span></span></button>`;
+      featured.innerHTML = `<button class="feature feature-home" data-open="${pick.id}" style="background-image:url('${esc(pick.img || '')}')" aria-label="${esc(pick.name)}"><span class="feature-text"><span class="kicker">${tr('Kiemelt ajánlat')}</span><b>${esc(pick.name)}</b><span class="feature-meta">${esc([year(pick), (pick.genres || []).slice(0, 2).map(genreName).join(' · '), pick.rating ? '★ ' + pick.rating : ''].filter(Boolean).join('  •  '))}</span><span class="feature-desc">${esc(pick.summary || tr('Fedezd fel a sorozatot'))}</span><span class="feature-cta">${ICON.play} ${tr('Adatlap megnyitása')}</span></span></button>`;
     }
     $('#pop').innerHTML = list.length ? `<div class="rail">${list.map(s => showCard(s)).join('')}</div>` : errorBox(NET_ERR);
   } catch { if (alive()) $('#pop').innerHTML = errorBox(NET_ERR); }
@@ -93,7 +93,7 @@ function groupByDay(items, withTime = true, premiere = false) {
       return `<div class="row">
         <img class="thumb" src="${esc(show.img || '')}" alt="" data-open="${show.id}" loading="lazy">
         <div class="body" data-open="${show.id}"><div class="t1">${esc(show.name)}</div>
-        <div class="t2">${premiere ? `<span class="pill ${ep.s === 1 ? 'accent' : 'neutral'}">${ep.s === 1 ? tr('Új sorozat') : ep.s > 1900 ? tr('{n}-es kiadás', { n: ep.s }) : tr('{n}. évad', { n: ep.s })}</span> ${esc((show.genres || []).slice(0, 2).join(', '))}` : `<span class="code">${code(ep)}</span> · ${esc(ep.name)}`}</div>
+        <div class="t2">${premiere ? `<span class="pill ${ep.s === 1 ? 'accent' : 'neutral'}">${ep.s === 1 ? tr('Új sorozat') : ep.s > 1900 ? tr('{n}-es kiadás', { n: ep.s }) : tr('{n}. évad', { n: ep.s })}</span> ${esc((show.genres || []).slice(0, 2).map(genreName).join(', '))}` : `<span class="code">${code(ep)}</span> · ${esc(ep.name)}`}</div>
         <div class="t3">${[time, show.network].filter(Boolean).map(esc).join(' · ')}</div></div>
         ${state.follows[show.id] ? `<span class="pill accent">${tr('Követed')}</span>` : ''}</div>`;
     }).join('')}</div></div>`).join('');

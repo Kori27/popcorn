@@ -2,10 +2,16 @@
 'use strict';
 
 /* ---------- Trailers (TMDB → YouTube, played inside the app) ---------- */
+/** Best YouTube video: the app's language always wins (a Hungarian teaser beats an English trailer), then English. */
 function pickTrailer(results) {
-  const score = v => (v.type === 'Trailer' ? 4 : v.type === 'Teaser' ? 2 : 0) + (v.iso_639_1 === state.lang ? 3 : 0) + (v.official ? 1 : 0);
+  const score = v => (v.iso_639_1 === state.lang ? 100 : v.iso_639_1 === 'en' ? 10 : 0)
+    + (v.type === 'Trailer' ? 4 : v.type === 'Teaser' ? 2 : 0) + (v.official ? 1 : 0);
   return (results || []).filter(v => v.site === 'YouTube').sort((a, b) => score(b) - score(a))[0] || null;
 }
+/** Short note under the trailer about its language. */
+const trailerLangNote = t => state.lang === 'en' ? ''
+  : t.iso_639_1 === state.lang ? ' · ' + tr('anyanyelvi')
+  : ' · ' + tr(t.iso_639_1 === 'en' ? 'angol nyelvű (magyar nem érhető el)' : 'eredeti nyelvű');
 async function trailerForShow(s) {
   const id = await tmdbTvId(s);
   if (!id) return null;
@@ -27,7 +33,7 @@ async function fillTrailer(promise, title) {
     if (!document.contains(slot)) return;
     slot.innerHTML = t
       ? `<button class="yt" data-yt="${esc(t.key)}" aria-label="${tr('Előzetes lejátszása')}" style="background-image:url('https://i.ytimg.com/vi/${esc(t.key)}/hqdefault.jpg')"><span class="play">${ICON.play}</span></button>
-         <p class="note" style="margin-top:8px">${esc(t.name)}${t.iso_639_1 === state.lang && state.lang !== 'en' ? ' · ' + tr('anyanyelvi') : ''}</p>`
+         <p class="note" style="margin-top:8px">${esc(t.name)}${trailerLangNote(t)}</p>`
       : `<p>${tr('Ehhez a címhez nem találtunk előzetest.')}</p><a class="btn ghost" style="text-decoration:none;margin-top:10px" href="${ytSearch(title)}" target="_blank" rel="noopener">${ICON.ext}${tr('Keresés a YouTube-on')}</a>`;
   } catch (e) { if (document.contains(slot)) slot.innerHTML = keyError(e); }
 }

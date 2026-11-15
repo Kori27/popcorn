@@ -3,13 +3,14 @@
 
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv]');
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo]');
   if (!t) return;
   if (t.dataset.yt) { playYouTube(t); return; }
   if (t.dataset.film) { openFilm(t.dataset.film); return; }
   if (t.dataset.movie) { openMovie(+t.dataset.movie); return; }
   if (t.dataset.wfilm) { openWikiFilm(t.dataset.wfilm); return; }
   if (t.dataset.tmdbtv) { openTmdbTv(+t.dataset.tmdbtv); return; }
+  if (t.dataset.epinfo) { const id = +t.dataset.epinfo; openEps.has(id) ? openEps.delete(id) : openEps.add(id); renderSheet(); return; }
   if (t.dataset.mvstatus) { const i = t.dataset.mvstatus.lastIndexOf('|'); setMovieStatus(t.dataset.mvstatus.slice(0, i), t.dataset.mvstatus.slice(i + 1)); return; }
   if (t.dataset.mvquick) { t.setAttribute('aria-pressed', t.getAttribute('aria-pressed') !== 'true'); toggleMovieSeen(t.dataset.mvquick); return; }
   if (t.dataset.skind) { searchKind = t.dataset.skind; render(); return; }
