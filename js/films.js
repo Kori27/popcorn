@@ -65,11 +65,31 @@ const MOVIE_META = {};
 function movieActions(key, meta) {
   if (meta) MOVIE_META[key] = meta;
   const st = state.movies[key]?.status;
+  const watching = !!state.currentlyWatching?.[key];
   return `<div class="actions" data-mvpanel="${esc(key)}">
     <button class="btn ${st === 'want' ? 'soft' : st ? 'ghost' : 'primary'}" data-mvstatus="${esc(key)}|want" aria-pressed="${st === 'want'}">${st === 'want' ? ICON.check : ICON.plus}${tr('Megnézendő')}</button>
     <button class="btn ${st === 'seen' ? 'soft' : 'ghost'}" data-mvstatus="${esc(key)}|seen" aria-pressed="${st === 'seen'}">${ICON.check}${tr(st === 'seen' ? 'Megnézve' : 'Megnéztem')}</button>
+    <button class="btn ${watching ? 'soft' : 'ghost'}" data-currently-watching="${esc(key)}" aria-pressed="${watching}">${watching ? ICON.check : ICON.play}${tr(watching ? 'Jelenleg ezt nézed' : 'Jelenleg ezt nézem')}</button>
     ${favBtn(key, meta)}</div>`;
 }
+function toggleCurrentlyWatching(key) {
+  state.currentlyWatching = state.currentlyWatching || {};
+  const cur = state.currentlyWatching[key];
+  if (cur) {
+    delete state.currentlyWatching[key];
+    toast(tr('{name} lekerült a folytatási listáról', { name: cur.title || 'Film' }));
+  } else {
+    const meta = MOVIE_META[key] || state.movies[key];
+    if (!meta) return;
+    state.currentlyWatching[key] = { key, kind: meta.kind, ref: meta.ref, title: meta.title,
+      img: meta.img || null, year: meta.year || '', added: Date.now() };
+    toast(tr('{name} felkerült a Jelenleg ezt nézed listára', { name: meta.title }));
+  }
+  save();
+  document.querySelectorAll(`[data-mvpanel="${CSS.escape(key)}"]`).forEach(p => { p.outerHTML = movieActions(key); });
+  if (tab === 'home') render();
+}
+
 function setMovieStatus(key, status) {
   const cur = state.movies[key], meta = MOVIE_META[key] || cur;
   if (!meta) return;

@@ -30,3 +30,4 @@ state.videaFavs = state.videaFavs || {};
 state.videaHistory = state.videaHistory || {};
 state.videaWant = state.videaWant || {};
 state.videaRatings = state.videaRatings || {};
+state.currentlyWatching = state.currentlyWatching || {};

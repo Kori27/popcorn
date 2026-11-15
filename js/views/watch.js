@@ -197,10 +197,50 @@ function videaRenderGrouped(items) {
     groups.get(key).items.push(item);
   }
   const grouped = [...groups.values()].filter(g => g.items.length >= 2);
-  const groupedIds = new Set(grouped.flatMap(g => g.items.map(x => x.vcode)));
   const solo = [...singles, ...[...groups.values()].filter(g => g.items.length < 2).flatMap(g => g.items)];
-  const card = videaWatchCard;
-  return `${grouped.map(g => `<section class="videa-series-group"><div class="sec-head"><h3>${esc(g.title)}</h3><span class="note">${g.items.length} epizód</span></div><div class="grid">${g.items.map(card).join('')}</div></section>`).join('')}${solo.length ? `<section class="grid">${solo.map(card).join('')}</section>` : ''}`;
+  const seriesCards = grouped.map((g, i) => {
+    const first = g.items[0], id = `videa-series-${i}-${pickSafeId(g.title)}`;
+    return `<article class="videa-series-card" data-videa-series-card="${esc(id)}">
+      <button class="videa-series-cover" type="button" data-videa-series-open="${esc(id)}">
+        ${first.thumbnail ? `<img src="${esc(first.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Sorozat</div>'}
+        <span><b>${esc(g.title)}</b><small>${g.items.length} epizód · Videa</small></span>
+      </button>
+      <div class="videa-series-detail" id="${esc(id)}">
+        <div class="videa-series-detail-head"><img class="videa-series-poster" src="${esc(first.thumbnail || '')}" alt="" loading="lazy">
+          <div><h3>${esc(g.title)}</h3><p class="note">${g.items.length} elérhető epizód</p><p class="videa-series-overview note">A sorozat epizódjai a Videa nyilvános találatai alapján.</p>
+          <div class="videa-series-trailer"></div></div>
+        </div>
+        <h4>Epizódok</h4><div class="videa-episodes">${g.items.map((ep, n) => {
+          const info = videaEpisodeInfo(ep);
+          return `<button class="videa-episode" data-videa="${esc(ep.vcode)}"><span>${esc(info?.season ? `S${info.season} · ` : '')}${esc(info?.episode ? `E${info.episode}` : ` ${n+1}. rész`)}</span><b>${esc(ep.title || g.title)}</b><small>${videaDurationLabel(videaDurationSeconds(ep.duration))}</small></button>`;
+        }).join('')}</div>
+      </div></article>`;
+  }).join('');
+  return `${seriesCards}${solo.length ? `<section class="grid">${solo.map(videaWatchCard).join('')}</section>` : ''}`;
+}
+function pickSafeId(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 32);
+}
+async function enrichVideaSeriesCard(id, title) {
+  const panel = document.getElementById(id);
+  if (!panel || panel.dataset.loaded === '1') return;
+  panel.dataset.loaded = '1';
+  if (!tmdbKey()) return;
+  try {
+    const result = await tmdb(`/search/tv?query=${encodeURIComponent(title)}&language=${TLANG()}`, 7 * DAY);
+    const show = result?.results?.[0];
+    if (!show) return;
+    const details = await tmdb(`/tv/${show.id}?language=${TLANG()}`, 7 * DAY);
+    if (!panel.isConnected) return;
+    const poster = panel.querySelector('.videa-series-poster');
+    if (poster && details.poster_path) poster.src = `${TIMG}w342${details.poster_path}`;
+    const overview = panel.querySelector('.videa-series-overview');
+    if (overview && details.overview) overview.textContent = details.overview;
+    const trailer = await tmdb(`/tv/${show.id}/videos?language=${TLANG()}`, 7 * DAY);
+    const clip = trailer?.results?.find(x => x.site === 'YouTube' && x.type === 'Trailer') || trailer?.results?.find(x => x.site === 'YouTube');
+    const slot = panel.querySelector('.videa-series-trailer');
+    if (slot && clip) slot.innerHTML = `<button class="btn ghost small" data-yt="${esc(clip.key)}">▶ Előzetes megtekintése</button>`;
+  } catch {}
 }
 let videaWatchItems = [];
 let videaRecommendedItems = [];
@@ -321,9 +361,9 @@ async function loadVideaWatchPage(query, alive, append = false) {
 function renderVideaWatch(body, alive) {
   searchKind = 'videa';
   body.innerHTML = `<p class="note">${tr('Keress a Videa nyilvános videói között, és nyisd meg őket a Popcorn beágyazott lejátszójában.')}</p>
-    <div class="sec-head"><h2>${tr('Ajánlott Videa-filmek')}</h2></div>
-    <section id="videaRecommendedGrid" class="grid"></section><p class="note" id="videaRecommendedStatus" aria-live="polite"></p>
     <div class="search">${ICON.search}<input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${tr('Videa-videó keresése')}" value="${esc(searchQ)}" aria-label="${tr('Videa-videó keresése')}"><button class="clear" id="qclear" type="button" aria-label="${tr('Keresés törlése')}" ${searchQ ? '' : 'hidden'}>${ICON.x}</button></div>
+    <div class="sec-head"><h2>${tr('Ajánlott Videa-filmek és sorozatok')}</h2></div>
+    <section id="videaRecommendedGrid" class="videa-recommendations"></section><p class="note" id="videaRecommendedStatus" aria-live="polite"></p>
     <div class="sec-head"><h2>${tr('Videa-találatok')}</h2></div>
     <section id="videaGrid" class="grid"></section><p class="note" id="videaMoreStatus" aria-live="polite"></p>
     <button class="btn ghost" id="videaMore" hidden>${tr('További találatok betöltése')}</button>`;

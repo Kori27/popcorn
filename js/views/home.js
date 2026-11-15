@@ -1,18 +1,21 @@
 
 function videaHomeSections() {
   const history = state.videaHistory || {};
-  const last = Object.values(history).sort((a,b) => (b.updated || 0) - (a.updated || 0))[0];
+  const watching = Object.values(history)
+    .filter(item => item?.id && !item.completed && !item.dismissed && Number(item.position || 0) >= 0)
+    .sort((a,b) => (b.updated || 0) - (a.updated || 0));
   const favs = Object.entries(state.videaFavs || {}).map(([id, item]) => ({ id, ...item }));
   const want = Object.entries(state.videaWant || {}).map(([id, item]) => ({ id, ...item }));
-  const resume = last ? `<section class="videa-home-section"><div class="sec-head"><h2>Jelenleg ezt nézed</h2><span class="count">Folytatás</span></div>
-    <div class="videa-resume">
-      ${last.thumbnail ? `<img class="home-resume-poster" src="${esc(last.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph home-resume-poster">Videa</div>'}
-      <div class="videa-resume-info"><b>${esc(last.title || 'Videa-videó')}</b>
-        <span class="meta">${fmtVideaTime(last.position || 0)}${last.duration ? ' / ' + fmtVideaTime(last.duration) : ''}</span>
-        <div class="videa-progress"><span style="width:${Math.max(0,Math.min(100, last.duration ? (last.position/last.duration)*100 : 0))}%"></span></div>
-        <button class="btn primary" data-videa="${esc(last.id)}">Folytatás</button>
+  const resume = watching.length ? `<section class="videa-home-section" data-resume-section><div class="sec-head"><h2>Jelenleg ezt nézed</h2><span class="count">${watching.length} videó</span></div>
+    <div class="videa-resume-list">${watching.map(item => `<article class="videa-resume-item">
+      ${item.thumbnail ? `<img class="home-resume-poster" src="${esc(item.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph home-resume-poster">Videa</div>'}
+      <div class="videa-resume-info"><b>${esc(item.title || 'Videa-videó')}</b>
+        <span class="meta">${fmtVideaTime(item.position || 0)}${item.duration ? ' / ' + fmtVideaTime(item.duration) : ''}</span>
+        <div class="videa-progress"><span style="width:${Math.max(0,Math.min(100, item.duration ? (item.position/item.duration)*100 : 0))}%"></span></div>
+        <div class="videa-resume-actions"><button class="btn primary" data-videa="${esc(item.id)}">Folytatás</button>
+        <button class="btn ghost small" data-videa-dismiss="${esc(item.id)}">Nem nézem tovább</button></div>
       </div>
-    </div></section>` : '';
+    </article>`).join('')}</div></section>` : '';
   const favSection = favs.length ? `<section class="videa-home-section"><div class="sec-head"><h2>Videa-kedvenceim</h2><span class="count">${favs.length} videó</span></div>
     <div class="rail">${favs.slice(0,12).map(f => `<article class="card videa-card">
       <button class="videa-card-open" data-videa="${esc(f.id)}">${f.thumbnail ? `<img class="poster" src="${esc(f.thumbnail)}" alt="" loading="lazy">` : '<div class="poster-ph">Videa</div>'}<span class="name">${esc(f.title || 'Videa-videó')}</span><span class="meta">${esc(f.durationText || '')}</span></button>
@@ -29,12 +32,29 @@ function fmtVideaTime(seconds) {
 // Popcorn · Home tab: continue watching, coming up, recommendations.
 'use strict';
 
+
+function movieCurrentlyWatchingSection() {
+  const items = Object.values(state.currentlyWatching || {}).sort((a,b) => (b.added || 0) - (a.added || 0));
+  if (!items.length) return '';
+  return `<section class="videa-home-section movie-current-section"><div class="sec-head"><h2>Jelenleg ezt nézed</h2><span class="count">${items.length} film</span></div>
+    <div class="videa-resume-list">${items.map(item => `<article class="videa-resume-item">
+      ${item.img ? `<img class="home-resume-poster" src="${esc(item.img)}" alt="" loading="lazy">` : '<div class="poster-ph home-resume-poster">Film</div>'}
+      <div class="videa-resume-info"><b>${esc(item.title || 'Film')}</b><span class="meta">${esc(item.year || '')}</span>
+        <div class="videa-resume-actions">
+          <button class="btn primary" ${item.kind === 'wd' ? `data-wfilm="${esc(item.ref)}"` : `data-movie="${esc(item.ref)}"`}>Adatlap megnyitása</button>
+          <button class="btn ghost small" data-currently-watching="${esc(item.key)}">Nem nézem tovább</button>
+        </div>
+      </div>
+    </article>`).join('')}</div></section>`;
+}
+
 /* ---------- Home ---------- */
 async function renderHome(v, alive) {
   const ids = Object.keys(state.follows);
   const videaHome = videaHomeSections();
+  const movieWatchingHome = movieCurrentlyWatchingSection();
   if (!ids.length) {
-    v.innerHTML = `${videaHome}<div id="featured"></div>${pickerCta()}${favHomeSection()}
+    v.innerHTML = `${movieWatchingHome}${videaHome}<div id="featured"></div>${pickerCta()}${favHomeSection()}
       <div class="welcome-panel">
         <span class="welcome-kicker">${tr('A következő kedvenced itt kezdődik')}</span>
         <h2>${tr('Filmek és sorozatok. Egy helyen.')}</h2>
@@ -46,7 +66,7 @@ async function renderHome(v, alive) {
     loadPopular(alive); loadOnMine(alive); loadFavRecs(alive);
     return;
   }
-  v.innerHTML = `${videaHome}<div id="featured"></div>${pickerCta()}${favHomeSection()}
+  v.innerHTML = `${movieWatchingHome}${videaHome}<div id="featured"></div>${pickerCta()}${favHomeSection()}
     <section><div class="sec-head"><h2>${tr('Folytasd')}</h2><span class="count" id="nextCount"></span></div><div id="next">${skelRows(3)}</div></section>
     <section><div class="sec-head"><h2>${tr('Hamarosan')}</h2><span class="count">${tr('következő 14 nap')}</span></div><div id="soon">${skelRows(2)}</div></section>
     ${servicesSection()}

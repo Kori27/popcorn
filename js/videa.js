@@ -268,7 +268,7 @@ async function playVidea(videoId) {
     const data = await getVideaVideo(videoId);
     const prior = state.videaHistory[videoId] || {};
     state.videaHistory[videoId] = { ...prior, id: videoId, title: data.title || prior.title || 'Videa-videó',
-      thumbnail: data.thumbnail || data.thumbnail_url || prior.thumbnail || '', updated: Date.now() };
+      thumbnail: data.thumbnail || data.thumbnail_url || prior.thumbnail || '', dismissed: false, updated: Date.now() };
     save();
     const actionSlot = $('#videaActions');
     if (actionSlot) actionSlot.innerHTML = videaActions(videoId, data, null);

@@ -15,7 +15,30 @@ document.addEventListener('click', e => {
 }, true);
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key]');
+  const seriesToggle = e.target.closest('[data-videa-series-open]');
+  if (seriesToggle) {
+    const id = seriesToggle.dataset.videaSeriesOpen;
+    const panel = document.getElementById(id);
+    if (panel) {
+      panel.classList.toggle('is-open');
+      if (panel.classList.contains('is-open')) {
+        const card = seriesToggle.closest('[data-videa-series-card]');
+        const title = card?.querySelector('.videa-series-cover b')?.textContent || '';
+        enrichVideaSeriesCard(id, title);
+      }
+    }
+    return;
+  }
+  const dismiss = e.target.closest('[data-videa-dismiss]');
+  if (dismiss) {
+    const id = dismiss.dataset.videaDismiss;
+    if (state.videaHistory[id]) { state.videaHistory[id].dismissed = true; save(); }
+    dismiss.closest('.videa-resume-item')?.remove();
+    if (!document.querySelector('.videa-resume-item')) document.querySelector('.videa-home-section[data-resume-section]')?.remove();
+    return;
+  }
+
+  const t = e.target.closest('[data-tab],[data-open],[data-ep],[data-follow],[data-close],[data-pick],[data-season],[data-seg],[data-more],[data-settings],[data-service],[data-notify],[data-where],[data-yt],[data-film],[data-movie],[data-iamore],[data-tmdb],[data-rate],[data-unrate],[data-libseg],[data-lang],[data-mode],[data-accent],[data-size],[data-oled],[data-wfilm],[data-skind],[data-mvstatus],[data-mvquick],[data-filmseg],[data-backup],[data-wseg],[data-freemore],[data-tmdbtv],[data-epinfo],[data-fav],[data-videa],[data-videa-fav],[data-videa-key],[data-currently-watching]');
   if (!t) return;
   if (t.dataset.fav) { e.stopPropagation(); toggleFav(t.dataset.fav); return; }
   if (t.dataset.videaFav) { e.stopPropagation(); toggleVideaFav(t.dataset.videaFav); return; }
@@ -23,6 +46,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.videaRate) { const i=t.dataset.videaRate.lastIndexOf('|'); setVideaRating(t.dataset.videaRate.slice(0,i), +t.dataset.videaRate.slice(i+1)); return; }
   if (t.dataset.videa) { playVidea(t.dataset.videa); return; }
   if (t.dataset.videaKey) { saveVideaKey(t.dataset.videaKey); return; }
+  if (t.dataset.currentlyWatching) { toggleCurrentlyWatching(t.dataset.currentlyWatching); return; }
   if (t.dataset.yt) { playYouTube(t); return; }
   if (t.dataset.film) { openFilm(t.dataset.film); return; }
   if (t.dataset.movie) { openMovie(+t.dataset.movie); return; }

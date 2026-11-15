@@ -735,3 +735,43 @@ img,video,iframe{max-width:100%}
 @media(max-width:520px){.media-poster-mini{width:64px;height:96px;flex-basis:64px}.media-title-copy h2{font-size:20px}}
 
 .home-resume-poster{width:76px;height:114px;object-fit:cover;aspect-ratio:2/3;border-radius:10px;flex:0 0 76px}
+
+
+/* v53 – Videa sorozatkártyák, felül maradó kereső és több folytatható videó */
+#videaRecommendedGrid.videa-recommendations{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;align-items:start}
+.videa-series-card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.videa-series-cover{display:flex;align-items:center;gap:14px;width:100%;padding:12px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.videa-series-cover>img,.videa-series-cover>.poster-ph{width:92px;height:132px;flex:none;object-fit:cover;border-radius:10px}
+.videa-series-cover>span{display:flex;flex-direction:column;gap:7px;min-width:0}
+.videa-series-cover b{font-size:17px;line-height:1.3}
+.videa-series-cover small{color:var(--muted)}
+.videa-series-detail{display:none;padding:14px;border-top:1px solid var(--line)}
+.videa-series-detail.is-open{display:block}
+.videa-series-detail-head{display:grid;grid-template-columns:112px minmax(0,1fr);gap:14px;align-items:start}
+.videa-series-poster{width:112px;aspect-ratio:2/3;object-fit:cover;border-radius:10px;background:var(--line)}
+.videa-series-detail h3{margin:0 0 6px}
+.videa-series-detail h4{margin:18px 0 8px}
+.videa-series-detail .note{margin:5px 0}
+.videa-episodes{display:grid;gap:7px}
+.videa-episode{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;text-align:left;cursor:pointer}
+.videa-episode b{overflow-wrap:anywhere;font-size:13px}
+.videa-episode span,.videa-episode small{color:var(--muted);font-size:12px}
+.videa-episode:hover,.videa-series-cover:hover{border-color:var(--accent)}
+.videa-resume-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.videa-resume-item{display:flex;gap:14px;align-items:center;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}
+.videa-resume-item .home-resume-poster{width:132px;height:88px;object-fit:cover;border-radius:9px;flex:none}
+.videa-resume-actions{display:flex;gap:8px;flex-wrap:wrap}
+.videa-resume-actions .btn{font-size:13px}
+@media(max-width:600px){.videa-resume-item{align-items:flex-start}.videa-resume-item .home-resume-poster{width:96px;height:72px}.videa-series-detail-head{grid-template-columns:88px minmax(0,1fr)}.videa-series-poster{width:88px}.videa-episode{grid-template-columns:52px minmax(0,1fr)}.videa-episode small{grid-column:2}}
+
+#videaRecommendedGrid.videa-recommendations{grid-template-columns:minmax(0,1fr)}
+.videa-series-card:has(.videa-series-detail.is-open){display:grid;grid-template-columns:minmax(190px,280px) minmax(0,1fr);align-items:start}
+.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover{display:flex;flex-direction:column;align-items:stretch;padding:16px}
+.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover>img,
+.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover>.poster-ph{width:100%;height:auto;aspect-ratio:2/3}
+.videa-series-card:has(.videa-series-detail.is-open) .videa-series-detail{border-top:0;border-left:1px solid var(--line);min-width:0}
+@media(max-width:680px){.videa-series-card:has(.videa-series-detail.is-open){grid-template-columns:1fr}.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover{flex-direction:row;align-items:center}.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover>img,.videa-series-card:has(.videa-series-detail.is-open) .videa-series-cover>.poster-ph{width:92px;height:132px;aspect-ratio:auto}.videa-series-card:has(.videa-series-detail.is-open) .videa-series-detail{border-left:0;border-top:1px solid var(--line)}}
+
+/* v54 – filmek felvétele a folytatási listába */
+.movie-current-section .videa-resume-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
+.movie-current-section .videa-resume-item{align-items:center}
